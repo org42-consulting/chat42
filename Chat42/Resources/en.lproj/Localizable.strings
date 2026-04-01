@@ -1,0 +1,164 @@
+/* App name */
+"Chat42." = "Chat42.";
+
+/* Sidebar */
+"sidebar.title" = "Chat42.";
+"sidebar.search.placeholder" = "Search chats";
+"sidebar.new_chat.help" = "New Chat (⌘N)";
+"sidebar.rename.placeholder" = "Title";
+"sidebar.context.rename" = "Rename";
+"sidebar.context.delete" = "Delete";
+"sidebar.empty.title" = "No conversations yet";
+"sidebar.empty.button" = "New Chat";
+"sidebar.settings" = "Settings";
+"sidebar.ollama.online" = "Ollama";
+"sidebar.ollama.offline" = "Offline";
+
+/* Chat */
+"chat.new" = "New Chat";
+"chat.generating" = "Generating…";
+"chat.clear" = "Clear conversation";
+"chat.welcome.subtitle" = "Your personal AI assistant, powered by Org42.";
+"chat.welcome.try_asking" = "Try asking:";
+"chat.starter.quantum" = "Explain quantum computing in simple terms";
+"chat.starter.python" = "Write a Python function to sort a list";
+"chat.starter.swift_concurrency" = "What are the best practices for Swift concurrency?";
+"chat.starter.swiftui" = "Summarize the key features of SwiftUI";
+"chat.no_selection" = "Select a conversation or start a new one";
+
+/* Input */
+"input.placeholder" = "Message Chat42.…";
+"input.hint" = "↩ to send  ·  ⇧↩ for newline";
+"input.send.help" = "Send message (↩)";
+"input.stop.help" = "Stop generating";
+
+/* Model selector */
+"model.backend.label" = "Backend";
+"model.refresh.help" = "Refresh models";
+"model.ollama.not_running" = "Ollama not running";
+"model.ollama.no_models" = "No models installed";
+"model.ollama.open_docs" = "Open Ollama docs";
+"model.ollama.no_models_short" = "No models";
+"model.ollama.offline" = "Offline";
+"model.ollama.select" = "Select model";
+"model.mlx.select" = "Select MLX model";
+
+/* Messages */
+"message.copy.help" = "Copy message";
+
+/* Menu */
+"menu.new_chat" = "New Chat";
+"menu.refresh_models" = "Refresh Ollama Models";
+
+/* Settings tabs */
+"settings.tab.general" = "General";
+"settings.tab.ollama" = "Ollama";
+"settings.tab.mlx" = "MLX";
+"settings.tab.appearance" = "Appearance";
+"settings.done" = "Done";
+
+/* Settings – General */
+"settings.general.section.conversation" = "Conversation";
+"settings.general.system_prompt.label" = "System Prompt";
+"settings.general.system_prompt.hint" = "Applied to new conversations.";
+"settings.general.temperature.label" = "Temperature";
+"settings.general.temperature.hint" = "Higher = more creative, lower = more deterministic";
+
+/* Settings – Ollama */
+"settings.ollama.section.connection" = "Connection";
+"settings.ollama.base_url" = "Base URL";
+"settings.ollama.base_url.placeholder" = "http://localhost:11434";
+"settings.ollama.status.label" = "Status";
+"settings.ollama.status.connected" = "Connected";
+"settings.ollama.status.unreachable" = "Not reachable";
+"settings.ollama.test_connection" = "Test Connection";
+"settings.ollama.installed_models" = "Installed Models (%lld)";
+"settings.ollama.start_hint" = "Start Ollama first: ollama serve";
+"settings.ollama.pull_hint" = "No models installed. Run: ollama pull llama3.2";
+
+/* Settings – MLX */
+"settings.mlx.section.title" = "Apple MLX";
+"settings.mlx.description" = "MLX runs models directly on Apple Silicon via the MLX framework. Models are downloaded from Hugging Face on first use.";
+"settings.mlx.section.models" = "Available Models";
+"settings.mlx.loaded" = "Loaded";
+"settings.mlx.load_button" = "Load";
+"settings.mlx.unload_button" = "Unload Current Model";
+
+/* Settings – Appearance */
+"settings.appearance.section" = "Theme";
+"settings.appearance.color_scheme" = "Color Scheme";
+"settings.appearance.system" = "System";
+"settings.appearance.light" = "Light";
+"settings.appearance.dark" = "Dark";
+
+/* App state errors */
+"error.ollama.not_running" = "Ollama is not running. Start it with: ollama serve";
+"error.no_ollama_model" = "No Ollama model selected.";
+"error.no_mlx_model" = "No MLX model loaded. Go to Settings → MLX to load a model.";
+"error.generic" = "Error: %@";
+
+/* MLX errors */
+"error.mlx.not_supported" = "MLX requires Apple Silicon (M1+). Direct inference unavailable.";
+"error.mlx.not_loaded" = "No MLX model is loaded. Select one in Settings → MLX.";
+"error.mlx.load_failed" = "Failed to load model: %@";
+"error.mlx.not_wired" = "Full MLX inference pipeline not yet wired. Use Ollama for inference.";
+"mlx.status.preparing" = "Preparing model…";
+"mlx.status.ready" = "Ready";
+
+/* Ollama errors */
+"error.ollama.unreachable" = "Cannot reach Ollama at %@. Is it running?";
+"error.ollama.invalid_response" = "Invalid response from Ollama";
+"error.ollama.api_error" = "Ollama error: %@";
+"error.ollama.decoding" = "Decoding error: %@";
+
+/* MLX model descriptions */
+"mlx.model.llama_1b.name" = "Llama 3.2 1B (4-bit)";
+"mlx.model.llama_1b.desc" = "Fast 1B parameter model, great for quick responses";
+"mlx.model.llama_3b.name" = "Llama 3.2 3B (4-bit)";
+"mlx.model.llama_3b.desc" = "Balanced 3B model with good quality";
+"mlx.model.mistral_7b.name" = "Mistral 7B (4-bit)";
+"mlx.model.mistral_7b.desc" = "High quality 7B instruction model";
+"mlx.model.phi35.name" = "Phi 3.5 Mini (4-bit)";
+"mlx.model.phi35.desc" = "Microsoft's efficient small language model";
+"mlx.model.gemma_2b.name" = "Gemma 2 2B (4-bit)";
+"mlx.model.gemma_2b.desc" = "Google's compact instruction-tuned model";
+
+/* Defaults */
+"default.no_model" = "No model";
+"default.new_chat" = "New Chat";
+"default.system_prompt" = "You are a helpful AI assistant.";
+
+/* Gateway settings */
+"settings.tab.gateway" = "Gateway";
+"settings.gateway.section.connection" = "Connection";
+"settings.gateway.base_url" = "Base URL";
+"settings.gateway.base_url.placeholder" = "http://localhost:4000";
+"settings.gateway.api_key" = "API Key";
+"settings.gateway.api_key.placeholder" = "sk-…";
+"settings.gateway.api_key.hint" = "Stored securely in the system Keychain.";
+"settings.gateway.api_key.show" = "Show API key";
+"settings.gateway.api_key.hide" = "Hide API key";
+"settings.gateway.status.connected" = "Connected";
+"settings.gateway.status.disconnected" = "Not connected";
+"settings.gateway.test_connection" = "Test Connection";
+"settings.gateway.section.compatible" = "Compatible Gateways";
+"settings.gateway.compatible.desc" = "Any OpenAI-compatible endpoint works — LiteLLM, OpenAI, OpenRouter, Jan, and more.";
+"settings.gateway.models" = "Available Models (%lld)";
+
+/* Gateway model selector */
+"model.gateway.not_connected" = "Gateway not connected";
+"model.gateway.no_models" = "No models returned";
+"model.gateway.no_models_short" = "No models";
+"model.gateway.offline" = "Offline";
+"model.gateway.select" = "Select model";
+
+/* Sidebar gateway status */
+"sidebar.gateway.online" = "Gateway";
+"sidebar.gateway.offline" = "Gateway";
+
+/* Gateway errors */
+"error.gateway.unreachable" = "Cannot reach gateway at %@";
+"error.gateway.auth_failed" = "Authentication failed. Check your API key.";
+"error.gateway.invalid_response" = "Gateway returned HTTP %lld";
+"error.gateway.api_error" = "Gateway error: %@";
+"error.no_gateway_model" = "No gateway model selected.";

@@ -1,0 +1,164 @@
+/* App name */
+"Chat42." = "Chat42.";
+
+/* Sidebar */
+"sidebar.title" = "Chat42.";
+"sidebar.search.placeholder" = "Gesprekken zoeken";
+"sidebar.new_chat.help" = "Nieuw gesprek (⌘N)";
+"sidebar.rename.placeholder" = "Titel";
+"sidebar.context.rename" = "Hernoemen";
+"sidebar.context.delete" = "Verwijderen";
+"sidebar.empty.title" = "Nog geen gesprekken";
+"sidebar.empty.button" = "Nieuw gesprek";
+"sidebar.settings" = "Instellingen";
+"sidebar.ollama.online" = "Ollama";
+"sidebar.ollama.offline" = "Offline";
+
+/* Chat */
+"chat.new" = "Nieuw gesprek";
+"chat.generating" = "Bezig met genereren…";
+"chat.clear" = "Gesprek wissen";
+"chat.welcome.subtitle" = "Uw persoonlijk AI-assistent, aangeboden door Org42.";
+"chat.welcome.try_asking" = "Probeer te vragen:";
+"chat.starter.quantum" = "Leg kwantumcomputing uit in eenvoudige termen";
+"chat.starter.python" = "Schrijf een Python-functie om een lijst te sorteren";
+"chat.starter.swift_concurrency" = "Wat zijn de beste praktijken voor Swift-concurrency?";
+"chat.starter.swiftui" = "Vat de belangrijkste functies van SwiftUI samen";
+"chat.no_selection" = "Selecteer een gesprek of start een nieuw gesprek";
+
+/* Input */
+"input.placeholder" = "Bericht aan Chat42.…";
+"input.hint" = "↩ om te verzenden  ·  ⇧↩ voor nieuwe regel";
+"input.send.help" = "Bericht verzenden (↩)";
+"input.stop.help" = "Stoppen met genereren";
+
+/* Model selector */
+"model.backend.label" = "Backend";
+"model.refresh.help" = "Modellen vernieuwen";
+"model.ollama.not_running" = "Ollama niet actief";
+"model.ollama.no_models" = "Geen modellen geïnstalleerd";
+"model.ollama.open_docs" = "Ollama-documentatie openen";
+"model.ollama.no_models_short" = "Geen modellen";
+"model.ollama.offline" = "Offline";
+"model.ollama.select" = "Selecteer model";
+"model.mlx.select" = "Selecteer MLX-model";
+
+/* Messages */
+"message.copy.help" = "Bericht kopiëren";
+
+/* Menu */
+"menu.new_chat" = "Nieuw gesprek";
+"menu.refresh_models" = "Ollama-modellen vernieuwen";
+
+/* Settings tabs */
+"settings.tab.general" = "Algemeen";
+"settings.tab.ollama" = "Ollama";
+"settings.tab.mlx" = "MLX";
+"settings.tab.appearance" = "Weergave";
+"settings.done" = "Gereed";
+
+/* Settings – General */
+"settings.general.section.conversation" = "Gesprek";
+"settings.general.system_prompt.label" = "Systeemprompt";
+"settings.general.system_prompt.hint" = "Wordt toegepast op nieuwe gesprekken.";
+"settings.general.temperature.label" = "Temperatuur";
+"settings.general.temperature.hint" = "Hoger = creatiever, lager = meer deterministisch";
+
+/* Settings – Ollama */
+"settings.ollama.section.connection" = "Verbinding";
+"settings.ollama.base_url" = "Basis-URL";
+"settings.ollama.base_url.placeholder" = "http://localhost:11434";
+"settings.ollama.status.label" = "Status";
+"settings.ollama.status.connected" = "Verbonden";
+"settings.ollama.status.unreachable" = "Niet bereikbaar";
+"settings.ollama.test_connection" = "Verbinding testen";
+"settings.ollama.installed_models" = "Geïnstalleerde modellen (%lld)";
+"settings.ollama.start_hint" = "Start Ollama eerst: ollama serve";
+"settings.ollama.pull_hint" = "Geen modellen geïnstalleerd. Voer uit: ollama pull llama3.2";
+
+/* Settings – MLX */
+"settings.mlx.section.title" = "Apple MLX";
+"settings.mlx.description" = "MLX voert modellen rechtstreeks uit op Apple Silicon via het MLX-framework. Modellen worden bij eerste gebruik gedownload van Hugging Face.";
+"settings.mlx.section.models" = "Beschikbare modellen";
+"settings.mlx.loaded" = "Geladen";
+"settings.mlx.load_button" = "Laden";
+"settings.mlx.unload_button" = "Huidig model verwijderen";
+
+/* Settings – Appearance */
+"settings.appearance.section" = "Thema";
+"settings.appearance.color_scheme" = "Kleurenschema";
+"settings.appearance.system" = "Systeem";
+"settings.appearance.light" = "Licht";
+"settings.appearance.dark" = "Donker";
+
+/* App state errors */
+"error.ollama.not_running" = "Ollama is niet actief. Start het met: ollama serve";
+"error.no_ollama_model" = "Geen Ollama-model geselecteerd.";
+"error.no_mlx_model" = "Geen MLX-model geladen. Ga naar Instellingen → MLX om een model te laden.";
+"error.generic" = "Fout: %@";
+
+/* MLX errors */
+"error.mlx.not_supported" = "MLX vereist Apple Silicon (M1+). Directe inferentie is niet beschikbaar.";
+"error.mlx.not_loaded" = "Geen MLX-model geladen. Selecteer er een in Instellingen → MLX.";
+"error.mlx.load_failed" = "Model laden mislukt: %@";
+"error.mlx.not_wired" = "MLX-inferentiepijplijn nog niet beschikbaar. Gebruik Ollama voor inferentie.";
+"mlx.status.preparing" = "Model voorbereiden…";
+"mlx.status.ready" = "Gereed";
+
+/* Ollama errors */
+"error.ollama.unreachable" = "Kan Ollama niet bereiken op %@. Is het actief?";
+"error.ollama.invalid_response" = "Ongeldige respons van Ollama";
+"error.ollama.api_error" = "Ollama-fout: %@";
+"error.ollama.decoding" = "Decodeersfout: %@";
+
+/* MLX model descriptions */
+"mlx.model.llama_1b.name" = "Llama 3.2 1B (4-bit)";
+"mlx.model.llama_1b.desc" = "Snel 1B-parametermodel, uitstekend voor snelle antwoorden";
+"mlx.model.llama_3b.name" = "Llama 3.2 3B (4-bit)";
+"mlx.model.llama_3b.desc" = "Gebalanceerd 3B-model met goede kwaliteit";
+"mlx.model.mistral_7b.name" = "Mistral 7B (4-bit)";
+"mlx.model.mistral_7b.desc" = "Hoogwaardig 7B-instructiemodel";
+"mlx.model.phi35.name" = "Phi 3.5 Mini (4-bit)";
+"mlx.model.phi35.desc" = "Microsoft's efficiënt klein taalmodel";
+"mlx.model.gemma_2b.name" = "Gemma 2 2B (4-bit)";
+"mlx.model.gemma_2b.desc" = "Google's compact instructiemodel";
+
+/* Defaults */
+"default.no_model" = "Geen model";
+"default.new_chat" = "Nieuw gesprek";
+"default.system_prompt" = "U bent een behulpzame AI-assistent.";
+
+/* Gateway settings */
+"settings.tab.gateway" = "Gateway";
+"settings.gateway.section.connection" = "Verbinding";
+"settings.gateway.base_url" = "Basis-URL";
+"settings.gateway.base_url.placeholder" = "http://localhost:4000";
+"settings.gateway.api_key" = "API-sleutel";
+"settings.gateway.api_key.placeholder" = "sk-…";
+"settings.gateway.api_key.hint" = "Veilig opgeslagen in de systeemsleutelhanger.";
+"settings.gateway.api_key.show" = "API-sleutel tonen";
+"settings.gateway.api_key.hide" = "API-sleutel verbergen";
+"settings.gateway.status.connected" = "Verbonden";
+"settings.gateway.status.disconnected" = "Niet verbonden";
+"settings.gateway.test_connection" = "Verbinding testen";
+"settings.gateway.section.compatible" = "Compatibele gateways";
+"settings.gateway.compatible.desc" = "Elk OpenAI-compatibel eindpunt werkt — LiteLLM, OpenAI, OpenRouter, Jan en meer.";
+"settings.gateway.models" = "Beschikbare modellen (%lld)";
+
+/* Gateway model selector */
+"model.gateway.not_connected" = "Gateway niet verbonden";
+"model.gateway.no_models" = "Geen modellen beschikbaar";
+"model.gateway.no_models_short" = "Geen modellen";
+"model.gateway.offline" = "Offline";
+"model.gateway.select" = "Selecteer model";
+
+/* Sidebar gateway status */
+"sidebar.gateway.online" = "Gateway";
+"sidebar.gateway.offline" = "Gateway";
+
+/* Gateway errors */
+"error.gateway.unreachable" = "Kan gateway niet bereiken op %@";
+"error.gateway.auth_failed" = "Authenticatie mislukt. Controleer uw API-sleutel.";
+"error.gateway.invalid_response" = "Gateway stuurde HTTP %lld";
+"error.gateway.api_error" = "Gateway-fout: %@";
+"error.no_gateway_model" = "Geen gatewaymodel geselecteerd.";

@@ -1,0 +1,67 @@
+name: Chat42
+options:
+  bundleIdPrefix: com.chat42
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  developmentLanguage: en
+
+packages:
+  mlx-swift:
+    url: https://github.com/ml-explore/mlx-swift
+    from: 0.20.0
+  swift-transformers:
+    url: https://github.com/huggingface/swift-transformers
+    from: 0.1.14
+
+targets:
+  Chat42:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Chat42/Sources
+        includes:
+          - "**/*.swift"
+      - path: Chat42/Resources
+        includes:
+          - "Info.plist"
+          - "Assets.xcassets"
+          - "en.lproj/Localizable.strings"
+          - "nl.lproj/Localizable.strings"
+    info:
+      path: Chat42/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: "Chat42."
+        CFBundleName: "Chat42."
+        NSHumanReadableCopyright: "Copyright © 2026 Org42."
+        LSMinimumSystemVersion: "14.0"
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+          NSExceptionDomains:
+            localhost:
+              NSExceptionAllowsInsecureHTTPLoads: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.chat42.Chat42
+        PRODUCT_NAME: Chat42
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_STRICT_CONCURRENCY: complete
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    dependencies:
+      - package: mlx-swift
+        product: MLX
+      - package: mlx-swift
+        product: MLXNN
+      - package: swift-transformers
+        product: Transformers
+    entitlements:
+      path: Chat42/Chat42.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-write: true
