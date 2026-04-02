@@ -8,12 +8,9 @@ options:
   developmentLanguage: en
 
 packages:
-  mlx-swift:
-    url: https://github.com/ml-explore/mlx-swift
-    from: 0.20.0
-  swift-transformers:
-    url: https://github.com/huggingface/swift-transformers
-    from: 0.1.14
+  mlx-swift-examples:
+    url: https://github.com/ml-explore/mlx-swift-examples
+    from: "2.29.1"
 
 targets:
   Chat42:
@@ -42,26 +39,19 @@ targets:
           NSExceptionDomains:
             localhost:
               NSExceptionAllowsInsecureHTTPLoads: true
+    entitlements:
+      path: Chat42/Chat42.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chat42.Chat42
         PRODUCT_NAME: Chat42
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
-        ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_STYLE: Automatic
         SWIFT_STRICT_CONCURRENCY: complete
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
-      - package: mlx-swift
-        product: MLX
-      - package: mlx-swift
-        product: MLXNN
-      - package: swift-transformers
-        product: Transformers
-    entitlements:
-      path: Chat42/Chat42.entitlements
-      properties:
-        com.apple.security.app-sandbox: true
-        com.apple.security.network.client: true
-        com.apple.security.files.user-selected.read-write: true
+      - package: mlx-swift-examples
+        product: MLXLLM
+      - package: mlx-swift-examples
+        product: MLXLMCommon

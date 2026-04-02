@@ -16,11 +16,13 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView {
-            SidebarView().navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 300)
+            SidebarView()
+                .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 300)
         } detail: {
             Group {
                 if let conversation = state.selectedConversation {
-                    ChatView(conversation: conversation).id(conversation.id) // re-creates view when switching conversations
+                    ChatView(conversation: conversation)
+                        .id(conversation.id)
                 } else {
                     noSelectionView
                 }
@@ -37,7 +39,6 @@ struct ContentView: View {
         .navigationSplitViewStyle(.balanced)
         .preferredColorScheme(preferredColorScheme)
         .task {
-            // Auto-connect to Ollama on launch
             await state.refreshOllamaModels()
         }
         .alert("Error", isPresented: Binding(
@@ -56,10 +57,6 @@ struct ContentView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 260)
-
-            Text("sidebar.title")
-                .font(.largeTitle)
-                .fontWeight(.bold)
 
             Text("chat.no_selection")
                 .font(.callout)

@@ -7,8 +7,8 @@ struct ChatInputView: View {
     @Binding var inputText: String
     var onSend: () -> Void
 
-    @State private var textEditorHeight: CGFloat = 36
     @State private var isFocused: Bool = false
+    @State private var textEditorHeight: CGFloat = 36
 
     var canSend: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !state.isSending
@@ -19,57 +19,8 @@ struct ChatInputView: View {
             Divider()
 
             HStack(alignment: .bottom, spacing: 10) {
-                ZStack(alignment: .topLeading) {
-                    GrowingTextView(
-                        text: $inputText,
-                        height: $textEditorHeight,
-                        isFocused: $isFocused,
-                        maxHeight: 160,
-                        onCommit: { if canSend { onSend() } }
-                    )
-                    .frame(height: textEditorHeight)
-
-                    if inputText.isEmpty {
-                        Text("input.placeholder")
-                            .font(.body)
-                            .foregroundStyle(.tertiary)
-                            // matches NSTextView inset (width: 6, height: 8) + lineFragmentPadding (5)
-                            .padding(.leading, 11)
-                            .padding(.top, 8)
-                            .allowsHitTesting(false)
-                    }
-                }
-                .background(Color.inputBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(
-                            isFocused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.12),
-                            lineWidth: 1
-                        )
-                )
-
-                Button {
-                    if state.isSending { state.stopStreaming() } else { onSend() }
-                } label: {
-                    ZStack {
-                        Circle()
-                            .fill(state.isSending ? Color.red.opacity(0.85) : (canSend ? Color.accentColor : Color.primary.opacity(0.12)))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: state.isSending ? "stop.fill" : "arrow.up")
-                            .font(.callout)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(state.isSending || canSend ? .white : Color.secondary)
-                    }
-                }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.return, modifiers: [])
-                .disabled(!canSend && !state.isSending)
-                .help(state.isSending
-                      ? String(localized: "input.stop.help")
-                      : String(localized: "input.send.help"))
-                .animation(.easeInOut(duration: 0.15), value: state.isSending)
-                .animation(.easeInOut(duration: 0.15), value: canSend)
+                inputField
+                sendButton
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -89,6 +40,66 @@ struct ChatInputView: View {
             .padding(.bottom, 6)
         }
         .background(.ultraThinMaterial)
+        .onAppear { isFocused = true }
+    }
+
+    // MARK: - Input field
+
+    private var inputField: some View {
+        ZStack(alignment: .topLeading) {
+            GrowingTextView(
+                text: $inputText,
+                height: $textEditorHeight,
+                isFocused: $isFocused,
+                maxHeight: 160,
+                onCommit: { if canSend { onSend() } }
+            )
+            .frame(height: textEditorHeight)
+
+            if inputText.isEmpty {
+                Text("input.placeholder")
+                    .font(.body)
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 11)
+                    .padding(.top, 8)
+                    .allowsHitTesting(false)
+            }
+        }
+        .background(Color.inputBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(
+                    isFocused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.12),
+                    lineWidth: 1
+                )
+        )
+    }
+
+    // MARK: - Send button
+
+    private var sendButton: some View {
+        Button {
+            if state.isSending { state.stopStreaming() } else { onSend() }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(state.isSending ? Color.red.opacity(0.85) : (canSend ? Color.accentColor : Color.primary.opacity(0.12)))
+                    .frame(width: 36, height: 36)
+                Image(systemName: state.isSending ? "stop.fill" : "arrow.up")
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(state.isSending || canSend ? .white : Color.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+        .keyboardShortcut(.return, modifiers: [])
+        .disabled(!canSend && !state.isSending)
+        .help(state.isSending
+              ? String(localized: "input.stop.help")
+              : String(localized: "input.send.help"))
+        .animation(.easeInOut(duration: 0.15), value: state.isSending)
+        .animation(.easeInOut(duration: 0.15), value: canSend)
     }
 
     private var selectedModelLabel: String? {
@@ -100,7 +111,7 @@ struct ChatInputView: View {
     }
 }
 
-// MARK: - NSViewRepresentable
+// MARK: - Growing NSTextView
 
 private struct GrowingTextView: NSViewRepresentable {
     @Binding var text: String
@@ -199,6 +210,8 @@ private final class FocusAwareTextView: NSTextView {
         return result
     }
 }
+
+// MARK: - Color
 
 extension Color {
     static let inputBackground = Color(NSColor.textBackgroundColor)

@@ -191,7 +191,7 @@ final class AppState {
                     assistantMessage.content = String(localized: "error.no_mlx_model")
                     return
                 }
-                let stream = mlx.chat(messages: contextMessages)
+                let stream = mlx.chat(messages: contextMessages, temperature: Float(temperature))
                 for try await token in stream {
                     assistantMessage.content += token
                 }

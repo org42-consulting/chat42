@@ -22,7 +22,6 @@ struct Chat42App: App {
                 .keyboardShortcut("n", modifiers: .command)
                 Divider()
             }
-
             CommandMenu("Model") {
                 ForEach(AIBackend.allCases, id: \.self) { backend in
                     Button(backend.rawValue) {
@@ -41,6 +40,7 @@ struct Chat42App: App {
         Settings {
             SettingsView()
                 .environment(appState)
+                .environment(mlxService)
         }
     }
 }

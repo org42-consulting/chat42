@@ -10,14 +10,13 @@
 		057B4965609E2E86175BC85E /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F7D51E0AF2B6E119948052 /* OllamaService.swift */; };
 		116A54026E143B5C441DF159 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5BB3B6D85777449626E89DE /* SidebarView.swift */; };
 		320D1A2E740117D93A51CB5F /* ChatInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC2F990AC946837A1F9A570 /* ChatInputView.swift */; };
-		3F33B91522B60D194085A6E9 /* MLXNN in Frameworks */ = {isa = PBXBuildFile; productRef = AE310C2171A897C203EEF1A1 /* MLXNN */; };
+		3F33B91522B60D194085A6E9 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 8DDFDD03886A68CD2A693429 /* MLXLMCommon */; };
 		5763E5DB77027B07BA59AC52 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73ADA7A180E08CF8601914B7 /* Message.swift */; };
-		601B14F9762CDC9BF5A1E721 /* MLX in Frameworks */ = {isa = PBXBuildFile; productRef = 773DE5E9842D794F4251E96D /* MLX */; };
+		601B14F9762CDC9BF5A1E721 /* MLXLLM in Frameworks */ = {isa = PBXBuildFile; productRef = 2881BD5FA1C437BB28D3012A /* MLXLLM */; };
 		6590A375C124833401A74338 /* GatewayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BD7B85C2CEB0D67D0D1D74 /* GatewayService.swift */; };
 		6A7883B259307D198659E58C /* AIModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C47C00ED092A452E9CE50D5 /* AIModel.swift */; };
 		6B315FF4A76BD5282E566801 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E92EF637C4A9DF88931771B5 /* Localizable.strings */; };
 		70D2D083FE2621494F74DC9F /* MessageBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CFC0755F89FEE37989589F /* MessageBubbleView.swift */; };
-		715C1951060ED121038F9084 /* Transformers in Frameworks */ = {isa = PBXBuildFile; productRef = 47F04D6CC17C71D871BD16AC /* Transformers */; };
 		9933415361204415F1D9830F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B805AE58B6B7DB8779E635C /* ContentView.swift */; };
 		A8F25B61EAA4CDAEC5481531 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C82BA864E25C94DB497D1F3 /* SettingsView.swift */; };
 		B60AC93F65DB419759824661 /* Chat42App.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FE3F5497B99368341F7B25 /* Chat42App.swift */; };
@@ -59,9 +58,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				601B14F9762CDC9BF5A1E721 /* MLX in Frameworks */,
-				3F33B91522B60D194085A6E9 /* MLXNN in Frameworks */,
-				715C1951060ED121038F9084 /* Transformers in Frameworks */,
+				601B14F9762CDC9BF5A1E721 /* MLXLLM in Frameworks */,
+				3F33B91522B60D194085A6E9 /* MLXLMCommon in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -161,9 +159,8 @@
 			);
 			name = Chat42;
 			packageProductDependencies = (
-				773DE5E9842D794F4251E96D /* MLX */,
-				AE310C2171A897C203EEF1A1 /* MLXNN */,
-				47F04D6CC17C71D871BD16AC /* Transformers */,
+				2881BD5FA1C437BB28D3012A /* MLXLLM */,
+				8DDFDD03886A68CD2A693429 /* MLXLMCommon */,
 			);
 			productName = Chat42;
 			productReference = 37C7CFB3BC473FB9DF1070F9 /* Chat42.app */;
@@ -194,8 +191,7 @@
 			mainGroup = AC0B83DC54AC5D7E60FA6FE9;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				7DBE096C934187D14D46A768 /* XCRemoteSwiftPackageReference "mlx-swift" */,
-				A9F1578600F169DB04B36C72 /* XCRemoteSwiftPackageReference "swift-transformers" */,
+				85B86600B98FD7422F5BB69E /* XCRemoteSwiftPackageReference "mlx-swift-examples" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A5314B62DF01E3C247F90A18 /* Products */;
@@ -319,19 +315,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Chat42/Chat42.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = CMG64699VT;
-				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Chat42/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Chat42.;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.org42.Chat42;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chat42.Chat42;
 				PRODUCT_NAME = Chat42;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -344,19 +336,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Chat42/Chat42.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = CMG64699VT;
-				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Chat42/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Chat42.;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.org42.Chat42;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chat42.Chat42;
 				PRODUCT_NAME = Chat42;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -451,39 +439,26 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		7DBE096C934187D14D46A768 /* XCRemoteSwiftPackageReference "mlx-swift" */ = {
+		85B86600B98FD7422F5BB69E /* XCRemoteSwiftPackageReference "mlx-swift-examples" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ml-explore/mlx-swift";
+			repositoryURL = "https://github.com/ml-explore/mlx-swift-examples";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.20.0;
-			};
-		};
-		A9F1578600F169DB04B36C72 /* XCRemoteSwiftPackageReference "swift-transformers" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/huggingface/swift-transformers";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.1.14;
+				minimumVersion = 2.29.1;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		47F04D6CC17C71D871BD16AC /* Transformers */ = {
+		2881BD5FA1C437BB28D3012A /* MLXLLM */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A9F1578600F169DB04B36C72 /* XCRemoteSwiftPackageReference "swift-transformers" */;
-			productName = Transformers;
+			package = 85B86600B98FD7422F5BB69E /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLLM;
 		};
-		773DE5E9842D794F4251E96D /* MLX */ = {
+		8DDFDD03886A68CD2A693429 /* MLXLMCommon */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7DBE096C934187D14D46A768 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLX;
-		};
-		AE310C2171A897C203EEF1A1 /* MLXNN */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 7DBE096C934187D14D46A768 /* XCRemoteSwiftPackageReference "mlx-swift" */;
-			productName = MLXNN;
+			package = 85B86600B98FD7422F5BB69E /* XCRemoteSwiftPackageReference "mlx-swift-examples" */;
+			productName = MLXLMCommon;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

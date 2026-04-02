@@ -1,100 +1,298 @@
 import Foundation
 
-// MLX LLM inference for Apple Silicon.
-// Uses mlx-swift (low-level) + swift-transformers (tokenization).
-//
-// Conditional compilation: when built without MLX, all methods gracefully return .notSupported.
+// MLX model management for Apple Silicon.
+// Downloads models directly from the Hugging Face HTTP API using URLSession.
+// MLX tensor inference requires arm64 and is guarded with #if arch(arm64).
 
-#if canImport(MLX) && canImport(Transformers)
-import MLX
-import MLXNN
-import Transformers
+#if arch(arm64)
+import MLXLLM
+import MLXLMCommon
 #endif
+
+// MARK: - Errors
 
 enum MLXServiceError: LocalizedError {
     case notSupported
     case modelNotLoaded
+    case modelNotDownloaded
     case loadFailed(String)
+    case noFilesFound
 
     var errorDescription: String? {
         switch self {
-        case .notSupported: return "MLX requires Apple Silicon (M1+). Direct inference unavailable."
-        case .modelNotLoaded: return "No MLX model is loaded. Select one in Settings → MLX."
-        case .loadFailed(let reason): return "Failed to load model: \(reason)"
+        case .notSupported:       return "MLX requires Apple Silicon (M1+). Direct inference unavailable."
+        case .modelNotLoaded:     return "No MLX model is loaded. Select one in Settings → MLX."
+        case .modelNotDownloaded: return "Model not downloaded. Download it first in Settings → MLX."
+        case .loadFailed(let r):  return "Failed to load model: \(r)"
+        case .noFilesFound:       return "No model files found in repository."
         }
     }
 }
+
+// MARK: - Per-model download state
+
+enum MLXDownloadState: Equatable {
+    case notDownloaded
+    case downloading(progress: Double)
+    case downloaded
+    case failed(String)
+
+    var isDownloading: Bool {
+        if case .downloading = self { return true }
+        return false
+    }
+}
+
+// MARK: - Service
 
 @Observable
 @MainActor
 final class MLXService {
     static let shared = MLXService()
 
+    var downloadStates: [String: MLXDownloadState] = [:]
     var loadedModelId: String?
     var isLoading = false
-    var loadProgress: Double = 0
     var loadStatus: String = ""
 
-    private init() {}
+    private(set) var modelURLs: [String: URL] = [:]
+    private static let urlsDefaultsKey = "mlx.downloadedModelURLs"
 
-    // MARK: - Check availability
+    #if arch(arm64)
+    private var container: ModelContainer?
+    #endif
+
+    private init() {
+        restoreDownloadedModels()
+    }
+
+    // MARK: - Availability
 
     var isAvailable: Bool {
-        #if canImport(MLX)
-        // Require Apple Silicon
         #if arch(arm64)
         return true
         #else
         return false
         #endif
-        #else
-        return false
+    }
+
+    // MARK: - Disk utilities
+
+    func isDownloaded(repoId: String) -> Bool { modelURLs[repoId] != nil }
+
+    func formattedDiskSize(for repoId: String) -> String? {
+        guard let url = modelURLs[repoId] else { return nil }
+        let bytes = directorySize(url)
+        guard bytes > 0 else { return nil }
+        let gb = Double(bytes) / 1_073_741_824
+        if gb >= 1 { return String(format: "%.1f GB", gb) }
+        return String(format: "%.0f MB", Double(bytes) / 1_048_576)
+    }
+
+    private func modelDirectory(for repoId: String) -> URL {
+        let safe = repoId.replacingOccurrences(of: "/", with: "__")
+        return FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Chat42/MLXModels/\(safe)", isDirectory: true)
+    }
+
+    private func directorySize(_ url: URL) -> Int64 {
+        guard let enumerator = FileManager.default.enumerator(
+            at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]
+        ) else { return 0 }
+        return (enumerator.allObjects as? [URL])?.reduce(0) {
+            $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+        } ?? 0
+    }
+
+    // MARK: - Persistence
+
+    private func restoreDownloadedModels() {
+        let saved = UserDefaults.standard.dictionary(forKey: Self.urlsDefaultsKey) as? [String: String] ?? [:]
+        for (repoId, path) in saved {
+            let url = URL(fileURLWithPath: path)
+            if FileManager.default.fileExists(atPath: url.path) {
+                modelURLs[repoId] = url
+                downloadStates[repoId] = .downloaded
+            }
+        }
+        for model in MLXModelInfo.bundled where downloadStates[model.repoId] == nil {
+            downloadStates[model.repoId] = .notDownloaded
+        }
+    }
+
+    private func persist(_ url: URL, for repoId: String) {
+        var d = UserDefaults.standard.dictionary(forKey: Self.urlsDefaultsKey) as? [String: String] ?? [:]
+        d[repoId] = url.path
+        UserDefaults.standard.set(d, forKey: Self.urlsDefaultsKey)
+    }
+
+    private func removePersisted(for repoId: String) {
+        var d = UserDefaults.standard.dictionary(forKey: Self.urlsDefaultsKey) as? [String: String] ?? [:]
+        d.removeValue(forKey: repoId)
+        UserDefaults.standard.set(d, forKey: Self.urlsDefaultsKey)
+    }
+
+    // MARK: - Download
+
+    /// Downloads a model from Hugging Face using the HF REST API + URLSession.
+    func downloadModel(repoId: String) async {
+        guard !(downloadStates[repoId]?.isDownloading ?? false) else { return }
+        guard !isDownloaded(repoId: repoId) else { return }
+
+        downloadStates[repoId] = .downloading(progress: 0)
+
+        do {
+            let files = try await hfFileList(repoId: repoId)
+            let wanted = files.filter {
+                ["json", "safetensors", "gguf", "model", "txt"]
+                    .contains(URL(fileURLWithPath: $0.name).pathExtension)
+            }
+            guard !wanted.isEmpty else { throw MLXServiceError.noFilesFound }
+
+            let localDir = modelDirectory(for: repoId)
+            try FileManager.default.createDirectory(at: localDir, withIntermediateDirectories: true)
+
+            let totalBytes = wanted.reduce(0) { $0 + $1.size }
+            var doneBytes: Int64 = 0
+
+            for file in wanted {
+                let filename = file.name.components(separatedBy: "/").last ?? file.name
+                let dest = localDir.appendingPathComponent(filename)
+                if !FileManager.default.fileExists(atPath: dest.path) {
+                    try await hfDownloadFile(repoId: repoId, path: file.name, to: dest)
+                }
+                doneBytes += file.size
+                let progress = totalBytes > 0 ? Double(doneBytes) / Double(totalBytes) : 0
+                downloadStates[repoId] = .downloading(progress: progress)
+            }
+
+            modelURLs[repoId] = localDir
+            downloadStates[repoId] = .downloaded
+            persist(localDir, for: repoId)
+        } catch {
+            downloadStates[repoId] = .failed(error.localizedDescription)
+        }
+    }
+
+    // MARK: - HuggingFace API helpers
+
+    private struct HFFile { let name: String; let size: Int64 }
+
+    private func hfFileList(repoId: String) async throws -> [HFFile] {
+        guard let url = URL(string: "https://huggingface.co/api/models/\(repoId)") else {
+            throw URLError(.badURL)
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+        struct APIResponse: Codable {
+            struct Sibling: Codable { let rfilename: String; let size: Int64? }
+            let siblings: [Sibling]
+        }
+        let decoded = try JSONDecoder().decode(APIResponse.self, from: data)
+        return decoded.siblings.map { HFFile(name: $0.rfilename, size: $0.size ?? 0) }
+    }
+
+    private func hfDownloadFile(repoId: String, path: String, to dest: URL) async throws {
+        let encoded = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
+        guard let url = URL(string: "https://huggingface.co/\(repoId)/resolve/main/\(encoded)") else { return }
+        let (tempURL, _) = try await URLSession.shared.download(from: url)
+        try? FileManager.default.removeItem(at: dest)
+        try FileManager.default.moveItem(at: tempURL, to: dest)
+    }
+
+    // MARK: - Delete
+
+    func deleteModel(repoId: String) {
+        if let url = modelURLs[repoId] { try? FileManager.default.removeItem(at: url) }
+        modelURLs.removeValue(forKey: repoId)
+        downloadStates[repoId] = .notDownloaded
+        removePersisted(for: repoId)
+        if loadedModelId == repoId { unloadModel() }
+    }
+
+    // MARK: - Load / Unload
+
+    func loadModel(repoId: String) async throws {
+        guard isAvailable else { throw MLXServiceError.notSupported }
+        guard let localURL = modelURLs[repoId] else { throw MLXServiceError.modelNotDownloaded }
+
+        isLoading = true
+        loadStatus = String(localized: "mlx.status.preparing")
+        defer { isLoading = false }
+
+        #if arch(arm64)
+        do {
+            let config = ModelConfiguration(directory: localURL)
+            let loaded = try await LLMModelFactory.shared.loadContainer(configuration: config) { [weak self] progress in
+                Task { @MainActor [weak self] in
+                    self?.loadStatus = "Loading… \(Int(progress.fractionCompleted * 100))%"
+                }
+            }
+            container = loaded
+            loadedModelId = repoId
+            loadStatus = String(localized: "mlx.status.ready")
+        } catch {
+            throw MLXServiceError.loadFailed(error.localizedDescription)
+        }
         #endif
     }
 
-    // MARK: - Load model
-
-    /// Downloads and loads a model from Hugging Face via swift-transformers.
-    func loadModel(repoId: String) async throws {
-        guard isAvailable else { throw MLXServiceError.notSupported }
-
-        isLoading = true
-        loadProgress = 0
-        loadStatus = "Preparing model…"
-        defer { isLoading = false }
-
-        // Model download is handled lazily by swift-transformers
-        // Full inference pipeline would be integrated here
-        try await Task.sleep(nanoseconds: 500_000_000)
-        loadedModelId = repoId
-        loadStatus = "Ready"
-        loadProgress = 1.0
+    func unloadModel() {
+        #if arch(arm64)
+        container = nil
+        #endif
+        loadedModelId = nil
+        loadStatus = ""
     }
 
     // MARK: - Chat
 
-    func chat(messages: [Message]) -> AsyncThrowingStream<String, Error> {
-        AsyncThrowingStream { continuation in
-            guard self.isAvailable else {
-                continuation.finish(throwing: MLXServiceError.notSupported)
-                return
-            }
-            guard self.loadedModelId != nil else {
-                continuation.finish(throwing: MLXServiceError.modelNotLoaded)
-                return
-            }
-
-            // Placeholder: full inference requires integrating MLX tensor ops + tokenizer.
-            // In a complete implementation this would run token-by-token generation.
-            continuation.finish(throwing: MLXServiceError.loadFailed(
-                "Full MLX inference pipeline not yet wired. Use Ollama for inference."
-            ))
+    func chat(messages: [Message], temperature: Float = 0.7) -> AsyncThrowingStream<String, Error> {
+        #if arch(arm64)
+        guard isAvailable else {
+            return AsyncThrowingStream { $0.finish(throwing: MLXServiceError.notSupported) }
         }
-    }
+        guard let container else {
+            return AsyncThrowingStream { $0.finish(throwing: MLXServiceError.modelNotLoaded) }
+        }
 
-    func unloadModel() {
-        loadedModelId = nil
-        loadStatus = ""
-        loadProgress = 0
+        let chatMessages: [Chat.Message] = messages.compactMap { msg in
+            switch msg.role {
+            case .user:      return .user(msg.content)
+            case .assistant: return .assistant(msg.content)
+            case .system:    return .system(msg.content)
+            }
+        }
+        let params = GenerateParameters(temperature: temperature)
+
+        return AsyncThrowingStream { continuation in
+            Task.detached {
+                do {
+                    try await container.perform { context in
+                        let input = try await context.processor.prepare(
+                            input: UserInput(chat: chatMessages)
+                        )
+                        _ = try MLXLMCommon.generate(
+                            input: input,
+                            parameters: params,
+                            context: context
+                        ) { tokens in
+                            let text = context.tokenizer.decode(tokens: tokens)
+                            continuation.yield(text)
+                            return .more
+                        }
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+        }
+        #else
+        return AsyncThrowingStream { $0.finish(throwing: MLXServiceError.notSupported) }
+        #endif
     }
 }

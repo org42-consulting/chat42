@@ -51,8 +51,10 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationSplitView {
-            List(SettingsTab.allCases, id: \.self, selection: $selectedTab) { tab in
+            List(SettingsTab.allCases, id: \.self) { tab in
                 Label(tab.label, systemImage: tab.icon)
+                    .tag(tab)
+                    .onTapGesture { selectedTab = tab }
             }
             .navigationSplitViewColumnWidth(min: 150, ideal: 170)
         } detail: {
@@ -154,6 +156,7 @@ struct SettingsView: View {
                         text: $gatewayURL
                     )
                     .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.leading)
                     .frame(width: 240)
                     .font(.callout)
                     .autocorrectionDisabled()
@@ -314,6 +317,7 @@ struct SettingsView: View {
                         text: $ollamaURL
                     )
                     .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.leading)
                     .frame(width: 240)
                     .font(.callout)
                     .autocorrectionDisabled()
@@ -410,46 +414,16 @@ struct SettingsView: View {
                 Text("settings.mlx.description")
                     .font(.callout)
                     .foregroundStyle(.secondary)
+                if !mlxService.isAvailable {
+                    Label(String(localized: "settings.mlx.unavailable"), systemImage: "exclamationmark.triangle")
+                        .font(.callout)
+                        .foregroundStyle(.orange)
+                }
             }
 
             Section(String(localized: "settings.mlx.section.models")) {
                 ForEach(MLXModelInfo.bundled) { model in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(model.name)
-                                .font(.callout)
-                                .fontWeight(.medium)
-                            Text(model.description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if mlxService.loadedModelId == model.id {
-                            Label(String(localized: "settings.mlx.loaded"), systemImage: "checkmark.circle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        } else if mlxService.isLoading && mlxLoadingId == model.id {
-                            HStack(spacing: 6) {
-                                ProgressView(value: mlxService.loadProgress)
-                                    .frame(width: 80)
-                                Text("\(Int(mlxService.loadProgress * 100))%")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        } else {
-                            Button(String(localized: "settings.mlx.load_button")) {
-                                mlxLoadingId = model.id
-                                state.selectedMLXModel = model
-                                Task {
-                                    try? await mlxService.loadModel(repoId: model.repoId)
-                                    mlxLoadingId = nil
-                                }
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .disabled(mlxService.isLoading)
-                        }
-                    }
+                    mlxModelRow(model)
                 }
             }
 
@@ -462,6 +436,129 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    @ViewBuilder
+    private func mlxModelRow(_ model: MLXModelInfo) -> some View {
+        let downloadState = mlxService.downloadStates[model.repoId] ?? .notDownloaded
+        let isLoaded = mlxService.loadedModelId == model.id
+        let isThisLoading = mlxService.isLoading && mlxLoadingId == model.id
+
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(model.name)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                Text(model.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if case .downloaded = downloadState,
+                   let size = mlxService.formattedDiskSize(for: model.repoId) {
+                    Text(size)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                if case .failed(let msg) = downloadState {
+                    Text(msg)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            mlxModelActions(
+                model: model,
+                downloadState: downloadState,
+                isLoaded: isLoaded,
+                isThisLoading: isThisLoading
+            )
+        }
+        .padding(.vertical, 2)
+    }
+
+    @ViewBuilder
+    private func mlxModelActions(
+        model: MLXModelInfo,
+        downloadState: MLXDownloadState,
+        isLoaded: Bool,
+        isThisLoading: Bool
+    ) -> some View {
+        switch downloadState {
+        case .notDownloaded:
+            Button {
+                Task { await mlxService.downloadModel(repoId: model.repoId) }
+            } label: {
+                Label(String(localized: "settings.mlx.download_button"), systemImage: "arrow.down.circle")
+                    .font(.callout)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .disabled(!mlxService.isAvailable)
+
+        case .downloading(let progress):
+            VStack(alignment: .trailing, spacing: 2) {
+                ProgressView(value: progress)
+                    .frame(width: 90)
+                Text("\(Int(progress * 100))%")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+
+        case .downloaded:
+            HStack(spacing: 8) {
+                if isThisLoading {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .frame(width: 14, height: 14)
+                        Text(String(localized: "settings.mlx.loading"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if isLoaded {
+                    Label(String(localized: "settings.mlx.loaded"), systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.green)
+                } else {
+                    Button(String(localized: "settings.mlx.load_button")) {
+                        mlxLoadingId = model.id
+                        state.selectedMLXModel = model
+                        Task {
+                            try? await mlxService.loadModel(repoId: model.repoId)
+                            mlxLoadingId = nil
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(mlxService.isLoading)
+                }
+
+                Button(role: .destructive) {
+                    mlxService.deleteModel(repoId: model.repoId)
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.red)
+                .help(String(localized: "settings.mlx.delete_help"))
+                .disabled(isThisLoading)
+            }
+
+        case .failed:
+            Button {
+                Task { await mlxService.downloadModel(repoId: model.repoId) }
+            } label: {
+                Label(String(localized: "settings.mlx.retry_button"), systemImage: "arrow.clockwise")
+                    .font(.callout)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+            .tint(.orange)
+            .disabled(!mlxService.isAvailable)
+        }
     }
 
     // MARK: - Appearance

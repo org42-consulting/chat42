@@ -78,11 +78,16 @@
 
 /* Settings – MLX */
 "settings.mlx.section.title" = "Apple MLX";
-"settings.mlx.description" = "MLX voert modellen rechtstreeks uit op Apple Silicon via het MLX-framework. Modellen worden bij eerste gebruik gedownload van Hugging Face.";
+"settings.mlx.description" = "MLX voert modellen rechtstreeks uit op Apple Silicon via het MLX-framework. Modellen worden gedownload van Hugging Face en lokaal opgeslagen.";
 "settings.mlx.section.models" = "Beschikbare modellen";
+"settings.mlx.unavailable" = "MLX vereist Apple Silicon (M1+)";
 "settings.mlx.loaded" = "Geladen";
+"settings.mlx.loading" = "Laden…";
 "settings.mlx.load_button" = "Laden";
 "settings.mlx.unload_button" = "Huidig model verwijderen";
+"settings.mlx.download_button" = "Downloaden";
+"settings.mlx.retry_button" = "Opnieuw proberen";
+"settings.mlx.delete_help" = "Model van schijf verwijderen";
 
 /* Settings – Appearance */
 "settings.appearance.section" = "Thema";
