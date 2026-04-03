@@ -115,15 +115,15 @@ final class AppState {
 
     // MARK: - Ollama model loading
 
-    func refreshOllamaModels() async {
+    func refreshOllamaModels(reportError: Bool = false) async {
         isLoadingModels = true
-        error = nil
+        if reportError { error = nil }
         defer { isLoadingModels = false }
 
         do {
             ollamaReachable = await ollamaService.isReachable()
             guard ollamaReachable else {
-                error = String(localized: "error.ollama.not_running")
+                if reportError { error = String(localized: "error.ollama.not_running") }
                 ollamaModels = []
                 return
             }
@@ -227,7 +227,7 @@ final class AppState {
 
     func applySettings() async {
         await ollamaService.updateBaseURL(ollamaBaseURL)
-        await refreshOllamaModels()
+        await refreshOllamaModels(reportError: true)
     }
 
     func applyGatewaySettings(baseURL: String, apiKey: String) async {

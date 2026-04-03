@@ -160,7 +160,16 @@ final class MLXService {
                 let filename = file.name.components(separatedBy: "/").last ?? file.name
                 let dest = localDir.appendingPathComponent(filename)
                 if !FileManager.default.fileExists(atPath: dest.path) {
-                    try await hfDownloadFile(repoId: repoId, path: file.name, to: dest)
+                    let fileBase = doneBytes
+                    let fileSize = file.size
+                    try await hfDownloadFile(repoId: repoId, path: file.name, to: dest) { [weak self] fraction in
+                        let progress: Double = totalBytes > 0
+                            ? (Double(fileBase) + Double(fileSize) * fraction) / Double(totalBytes)
+                            : fraction
+                        await MainActor.run { [weak self] in
+                            self?.downloadStates[repoId] = .downloading(progress: min(progress, 1.0))
+                        }
+                    }
                 }
                 doneBytes += file.size
                 let progress = totalBytes > 0 ? Double(doneBytes) / Double(totalBytes) : 0
@@ -195,10 +204,18 @@ final class MLXService {
         return decoded.siblings.map { HFFile(name: $0.rfilename, size: $0.size ?? 0) }
     }
 
-    private func hfDownloadFile(repoId: String, path: String, to dest: URL) async throws {
+    nonisolated private func hfDownloadFile(repoId: String, path: String, to dest: URL,
+                                             onProgress: @escaping @Sendable (Double) async -> Void = { _ in }) async throws {
         let encoded = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
         guard let url = URL(string: "https://huggingface.co/\(repoId)/resolve/main/\(encoded)") else { return }
-        let (tempURL, _) = try await URLSession.shared.download(from: url)
+
+        // URLSession.shared does not fire per-task download delegate callbacks.
+        // A dedicated session with a session-level delegate is required.
+        let tempURL: URL = try await withCheckedThrowingContinuation { continuation in
+            let delegate = HFDownloadProgressDelegate(onProgress: onProgress, continuation: continuation)
+            let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+            session.downloadTask(with: url).resume()
+        }
         try? FileManager.default.removeItem(at: dest)
         try FileManager.default.moveItem(at: tempURL, to: dest)
     }
@@ -275,14 +292,13 @@ final class MLXService {
                         let input = try await context.processor.prepare(
                             input: UserInput(chat: chatMessages)
                         )
-                        _ = try MLXLMCommon.generate(
-                            input: input,
-                            parameters: params,
-                            context: context
-                        ) { tokens in
-                            let text = context.tokenizer.decode(tokens: tokens)
-                            continuation.yield(text)
-                            return .more
+                        let cache = context.model.newCache(parameters: params)
+                        for await item in try MLXLMCommon.generate(
+                            input: input, cache: cache, parameters: params, context: context)
+                        {
+                            if let chunk = item.chunk {
+                                continuation.yield(chunk)
+                            }
                         }
                     }
                     continuation.finish()
@@ -294,5 +310,49 @@ final class MLXService {
         #else
         return AsyncThrowingStream { $0.finish(throwing: MLXServiceError.notSupported) }
         #endif
+    }
+}
+
+// MARK: - Download progress delegate
+
+private final class HFDownloadProgressDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    private let onProgress: @Sendable (Double) async -> Void
+    private var continuation: CheckedContinuation<URL, Error>?
+    private var completed = false
+
+    init(onProgress: @escaping @Sendable (Double) async -> Void,
+         continuation: CheckedContinuation<URL, Error>) {
+        self.onProgress = onProgress
+        self.continuation = continuation
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
+                    didWriteData bytesWritten: Int64, totalBytesWritten: Int64,
+                    totalBytesExpectedToWrite: Int64) {
+        guard totalBytesExpectedToWrite > 0 else { return }
+        let fraction = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+        Task { await self.onProgress(fraction) }
+    }
+
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask,
+                    didFinishDownloadingTo location: URL) {
+        guard !completed else { return }
+        completed = true
+        // URLSession deletes the temp file after this method returns — must copy it first.
+        let copy = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        do {
+            try FileManager.default.copyItem(at: location, to: copy)
+            continuation?.resume(returning: copy)
+        } catch {
+            continuation?.resume(throwing: error)
+        }
+        continuation = nil
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard let error, !completed else { return }
+        completed = true
+        continuation?.resume(throwing: error)
+        continuation = nil
     }
 }
