@@ -8,6 +8,9 @@ You might have heard about running AI locally and thought it sounded like someth
 
 If you have a recent Mac with Apple Silicon (like an M3, M4 or M5 chip), you already own a fantastic machine that is built for AI workloads. You do not need expensive graphics cards or complex coding setups. All you need is **Chat42.**
 
+<img width="912" height="764" alt="Image" src="https://github.com/user-attachments/assets/47fcc1c1-0af9-4c8d-826b-afad644b1edf" />
+
+
 ## Features
 Chat42 is a user friendly frontend for AI models that run on your machine or somewhere else (like in the cloud).
 - Native MacOS app, providing a smooth and polished user experience
@@ -19,7 +22,25 @@ Chat42 is a user friendly frontend for AI models that run on your machine or som
 - Temperature control for response randomness
 - Dark/light mode support
 
+## Quick Start Guide
+Want to get started without having to face technical installations? Just follow these steps:
+- Download Chat42.
+- Open the downloaded DMG file and drag the Chat42. app to your Applications folder
+- Doubleclick on the Chat42. icon to open the app
+- Click "Settings"
+- Select "MLX"
+- Download any of the listed models
+- When download, click "Load", followed by "Done".
+- Start a new converation by clicking the button "New chat"
+- Make sure "MLX" is selected in the top bar
+- Enter a promppt, such as "Write a haiku about AI"  
+
+<img width="912" height="764" alt="Image" src="https://github.com/user-attachments/assets/f0a16e28-4425-4f42-8c9d-c26e93fb94ce" />
+
+
 ## Supported AI Backends
+Chat42. is both user friendly and powerful, and support 3 different kinds of backend, spanning local and cloud models. How cool is that?  
+<img width="912" height="764" alt="Image" src="https://github.com/user-attachments/assets/d249f48b-eca1-4053-b075-4753ecf90a9d" />
 
 ### 1. Ollama
 Ollama is a tool for running large language models locally. It supports various models and allows you to run them on your own machine.
@@ -112,9 +133,7 @@ Access settings through the gear icon in the sidebar or via the Settings menu.
 
 ## Privacy Policy
 
-Chat42 does not collect or transmit any personal data. All conversations and model usage occur locally on your device. When connecting to external services (like Ollama or API endpoints), data is transmitted according to the privacy policies of those services.
+Chat42. does not collect or transmit any personal data. All conversations and model usage occur locally on your device. When connecting to external services (like Ollama or API endpoints), data is transmitted according to the privacy policies of those services.
 
-## License
 
-This project is licensed under the MIT License.
 
