@@ -110,8 +110,9 @@ actor OllamaService {
 
         let chatMessages = messages.map { msg -> OllamaChatMessage in
           // Strip the "data:<mime>;base64," prefix — Ollama expects raw base64.
-          let base64Images = msg.images?.compactMap {
-            $0.components(separatedBy: ",").last
+          let base64Images = msg.images?.compactMap { uri -> String? in
+            let raw = uri.components(separatedBy: ",").last ?? uri
+            return raw.isEmpty ? nil : raw
           }
           return OllamaChatMessage(
             role: msg.role.rawValue,
