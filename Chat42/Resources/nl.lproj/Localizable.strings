@@ -31,6 +31,7 @@
 "input.hint" = "↩ om te verzenden  ·  ⇧↩ voor nieuwe regel";
 "input.send.help" = "Bericht verzenden (↩)";
 "input.stop.help" = "Stoppen met genereren";
+"input.attach.help" = "Bestand bijvoegen";
 
 /* Model selector */
 "model.backend.label" = "Backend";
@@ -101,6 +102,7 @@
 "error.no_ollama_model" = "Geen Ollama-model geselecteerd.";
 "error.no_mlx_model" = "Geen MLX-model geladen. Ga naar Instellingen → MLX om een model te laden.";
 "error.generic" = "Fout: %@";
+"error.mlx_no_images" = "MLX ondersteunt geen afbeeldingsbijlagen. Gebruik Ollama of Gateway met een vision model.";
 
 /* MLX errors */
 "error.mlx.not_supported" = "MLX vereist Apple Silicon (M1+). Directe inferentie is niet beschikbaar.";

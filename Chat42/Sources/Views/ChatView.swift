@@ -5,6 +5,7 @@ struct ChatView: View {
   let conversation: Conversation
   @State private var inputText = ""
   @State private var scrollProxy: ScrollViewProxy?
+  @State private var pendingAttachments: [AttachedFile] = []
 
   var visibleMessages: [Message] {
     conversation.messages.filter { $0.role != .system }
@@ -19,10 +20,11 @@ struct ChatView: View {
       } else {
         messageList
       }
-      ChatInputView(inputText: $inputText) {
-        sendMessage()
-      }
-      .environment(state)
+      ChatInputView(inputText: $inputText, onSend: sendMessage, pendingAttachments: $pendingAttachments)
+        .environment(state)
+    }
+    .onChange(of: conversation.id) {
+      pendingAttachments = []
     }
   }
 
@@ -156,8 +158,10 @@ struct ChatView: View {
 
   private func sendMessage() {
     let text = inputText
+    let attachments = pendingAttachments
     inputText = ""
-    Task { await state.sendMessage(text) }
+    pendingAttachments = []
+    Task { await state.sendMessage(text, attachments: attachments) }
   }
 
   private func clearConversation() {

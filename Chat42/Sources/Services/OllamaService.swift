@@ -28,6 +28,7 @@ struct OllamaChatRequest: Codable {
 struct OllamaChatMessage: Codable {
   let role: String
   let content: String
+  let images: [String]?  // raw base64 strings (no data URI prefix)
 }
 
 struct OllamaOptions: Codable {
@@ -107,8 +108,17 @@ actor OllamaService {
           return
         }
 
-        let chatMessages = messages.map {
-          OllamaChatMessage(role: $0.role.rawValue, content: $0.content)
+        let chatMessages = messages.map { msg -> OllamaChatMessage in
+          // Strip the "data:<mime>;base64," prefix — Ollama expects raw base64.
+          let base64Images = msg.images?.compactMap { uri -> String? in
+            let raw = uri.components(separatedBy: ",").last ?? uri
+            return raw.isEmpty ? nil : raw
+          }
+          return OllamaChatMessage(
+            role: msg.role.rawValue,
+            content: msg.content,
+            images: base64Images?.isEmpty == false ? base64Images : nil
+          )
         }
 
         let requestBody = OllamaChatRequest(

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ChatInputView: View {
   @Environment(AppState.self) private var state
@@ -7,18 +8,30 @@ struct ChatInputView: View {
   @Binding var inputText: String
   var onSend: () -> Void
 
+  @Binding var pendingAttachments: [AttachedFile]
+  @State private var isDragOver: Bool = false
+
   @State private var isFocused: Bool = false
   @State private var textEditorHeight: CGFloat = 36
 
   var canSend: Bool {
-    !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !state.isSending
+    (!inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      || !pendingAttachments.isEmpty)
+      && !state.isSending
   }
 
   var body: some View {
     VStack(spacing: 0) {
       Divider()
 
+      if !pendingAttachments.isEmpty {
+        AttachmentRowView(attachments: $pendingAttachments)
+          .padding(.horizontal, 16)
+          .padding(.top, 10)
+      }
+
       HStack(alignment: .bottom, spacing: 10) {
+        attachButton
         inputField
         sendButton
       }
@@ -40,6 +53,20 @@ struct ChatInputView: View {
       .padding(.bottom, 6)
     }
     .background(.ultraThinMaterial)
+    .overlay(
+      RoundedRectangle(cornerRadius: 8)
+        .stroke(Color.accentColor.opacity(isDragOver ? 0.6 : 0), lineWidth: 2)
+        .padding(2)
+    )
+    .onDrop(of: [UTType.fileURL], isTargeted: $isDragOver) { providers in
+      providers.forEach { provider in
+        _ = provider.loadObject(ofClass: URL.self) { url, _ in
+          guard let url, url.isFileURL else { return }
+          DispatchQueue.main.async { addAttachment(from: url) }
+        }
+      }
+      return !providers.isEmpty
+    }
     .onAppear { isFocused = true }
   }
 
@@ -76,6 +103,17 @@ struct ChatInputView: View {
     )
   }
 
+  private var attachButton: some View {
+    Button(action: openFilePicker) {
+      Image(systemName: "paperclip")
+        .font(.callout)
+        .foregroundStyle(.secondary)
+        .frame(width: 28, height: 28)
+    }
+    .buttonStyle(.plain)
+    .help(String(localized: "input.attach.help"))
+  }
+
   // MARK: - Send button
 
   private var sendButton: some View {
@@ -106,6 +144,35 @@ struct ChatInputView: View {
     )
     .animation(.easeInOut(duration: 0.15), value: state.isSending)
     .animation(.easeInOut(duration: 0.15), value: canSend)
+  }
+
+  private func openFilePicker() {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = false
+    panel.allowsMultipleSelection = true
+    panel.allowedContentTypes = [.text, .pdf, .image]
+    panel.begin { response in
+      guard response == .OK else { return }
+      DispatchQueue.main.async {
+        panel.urls.forEach { addAttachment(from: $0) }
+      }
+    }
+  }
+
+  private func addAttachment(from url: URL) {
+    do {
+      let file = try AttachmentProcessor.makeAttachedFile(url: url)
+      pendingAttachments.append(file)
+    } catch AttachmentProcessingError.unsupportedType {
+      // Silently ignore unsupported types dropped onto the input area.
+    } catch {
+      let alert = NSAlert()
+      alert.messageText = "Could not attach file"
+      alert.informativeText = error.localizedDescription
+      alert.alertStyle = .warning
+      alert.runModal()
+    }
   }
 
   private var selectedModelLabel: String? {
