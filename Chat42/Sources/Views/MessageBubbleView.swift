@@ -76,6 +76,9 @@ struct MessageBubbleView: View {
 
   private var bubbleContent: some View {
     VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
+      if !message.attachments.isEmpty {
+        attachmentChips
+      }
       ZStack(alignment: isUser ? .bottomTrailing : .bottomLeading) {
         bubbleText
           .padding(.horizontal, 14)
@@ -112,6 +115,17 @@ struct MessageBubbleView: View {
           .help(String(localized: "message.copy.help"))
         }
       }
+    }
+  }
+
+  private var attachmentChips: some View {
+    ScrollView(.horizontal, showsIndicators: false) {
+      HStack(spacing: 6) {
+        ForEach(message.attachments) { attachment in
+          AttachmentChipView(name: attachment.name, type: attachment.type)
+        }
+      }
+      .padding(.vertical, 2)
     }
   }
 
