@@ -31,6 +31,7 @@
 "input.hint" = "↩ to send  ·  ⇧↩ for newline";
 "input.send.help" = "Send message (↩)";
 "input.stop.help" = "Stop generating";
+"input.attach.help" = "Attach file";
 
 /* Model selector */
 "model.backend.label" = "Backend";
@@ -101,6 +102,7 @@
 "error.no_ollama_model" = "No Ollama model selected.";
 "error.no_mlx_model" = "No MLX model loaded. Go to Settings → MLX to load a model.";
 "error.generic" = "Error: %@";
+"error.mlx_no_images" = "MLX does not support image attachments. Use Ollama or Gateway with a vision model.";
 
 /* MLX errors */
 "error.mlx.not_supported" = "MLX requires Apple Silicon (M1+). Direct inference unavailable.";
