@@ -154,7 +154,9 @@ struct ChatInputView: View {
     panel.allowedContentTypes = [.text, .pdf, .image]
     panel.begin { response in
       guard response == .OK else { return }
-      panel.urls.forEach { addAttachment(from: $0) }
+      DispatchQueue.main.async {
+        panel.urls.forEach { addAttachment(from: $0) }
+      }
     }
   }
 
