@@ -11,6 +11,7 @@
 		116A54026E143B5C441DF159 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5BB3B6D85777449626E89DE /* SidebarView.swift */; };
 		320D1A2E740117D93A51CB5F /* ChatInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC2F990AC946837A1F9A570 /* ChatInputView.swift */; };
 		7E3A9F2C1D4B8E06A5C71F03 /* AttachmentChipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8D2E7A9F1C3056E2A84D1F /* AttachmentChipView.swift */; };
+		E5F6A7B8C9D0112E3F4A5B6C /* AttachmentRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D3E4F5A6B7081C9D0E1F2A /* AttachmentRowView.swift */; };
 		3F33B91522B60D194085A6E9 /* MLXLMCommon in Frameworks */ = {isa = PBXBuildFile; productRef = 8DDFDD03886A68CD2A693429 /* MLXLMCommon */; };
 		5763E5DB77027B07BA59AC52 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73ADA7A180E08CF8601914B7 /* Message.swift */; };
 		A1B2C3D4E5F60001ABCDEF01 /* AttachedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60002ABCDEF02 /* AttachedFile.swift */; };
@@ -35,6 +36,7 @@
 /* Begin PBXFileReference section */
 		19CFC0755F89FEE37989589F /* MessageBubbleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubbleView.swift; sourceTree = "<group>"; };
 		4B8D2E7A9F1C3056E2A84D1F /* AttachmentChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentChipView.swift; sourceTree = "<group>"; };
+		C2D3E4F5A6B7081C9D0E1F2A /* AttachmentRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentRowView.swift; sourceTree = "<group>"; };
 		2B805AE58B6B7DB8779E635C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2C47C00ED092A452E9CE50D5 /* AIModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIModel.swift; sourceTree = "<group>"; };
 		2EC2F990AC946837A1F9A570 /* ChatInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatInputView.swift; sourceTree = "<group>"; };
@@ -87,6 +89,7 @@
 			isa = PBXGroup;
 			children = (
 				4B8D2E7A9F1C3056E2A84D1F /* AttachmentChipView.swift */,
+				C2D3E4F5A6B7081C9D0E1F2A /* AttachmentRowView.swift */,
 				2EC2F990AC946837A1F9A570 /* ChatInputView.swift */,
 				3C32B079B527CF2370A39EC1 /* ChatView.swift */,
 				19CFC0755F89FEE37989589F /* MessageBubbleView.swift */,
@@ -234,6 +237,7 @@
 				D51771F858752009315A46FF /* AppState.swift in Sources */,
 				B60AC93F65DB419759824661 /* Chat42App.swift in Sources */,
 				7E3A9F2C1D4B8E06A5C71F03 /* AttachmentChipView.swift in Sources */,
+				E5F6A7B8C9D0112E3F4A5B6C /* AttachmentRowView.swift in Sources */,
 				320D1A2E740117D93A51CB5F /* ChatInputView.swift in Sources */,
 				C5F9E45531F953198D31E7B3 /* ChatView.swift in Sources */,
 				9933415361204415F1D9830F /* ContentView.swift in Sources */,
