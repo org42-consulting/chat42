@@ -34,7 +34,7 @@ final class Message: Identifiable, Hashable {
 struct ChatMessage: Sendable {
   let role: MessageRole
   let content: String
-  var images: [String]? = nil  // data URI strings, e.g. "data:image/jpeg;base64,..."
+  let images: [String]? = nil  // data URI strings, e.g. "data:image/jpeg;base64,..."
 }
 
 // MARK: - Codable support for persistence
@@ -45,7 +45,7 @@ struct MessageDTO: Codable {
   let timestamp: Date
   let attachments: [MessageAttachment]
 
-  init(from message: Message) {
+  init(message: Message) {
     id = message.id
     role = message.role
     content = message.content

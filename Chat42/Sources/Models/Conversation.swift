@@ -51,7 +51,7 @@ struct ConversationDTO: Codable {
   init(from conv: Conversation) {
     id = conv.id
     title = conv.title
-    messages = conv.messages.map(MessageDTO.init)
+    messages = conv.messages.map { MessageDTO(message: $0) }
     modelName = conv.modelName
     backend = conv.backend
     createdAt = conv.createdAt
