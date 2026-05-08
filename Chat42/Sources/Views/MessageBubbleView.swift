@@ -127,6 +127,8 @@ struct MessageBubbleView: View {
       }
       .padding(.vertical, 2)
     }
+    .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+    .accessibilityLabel("Attachments")
   }
 
   private var bubbleText: some View {
