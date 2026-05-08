@@ -22,6 +22,7 @@ struct AttachmentChipView: View {
             .foregroundStyle(.secondary)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Remove \(name)")
       }
     }
     .padding(.horizontal, 8)
