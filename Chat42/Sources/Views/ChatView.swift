@@ -23,6 +23,9 @@ struct ChatView: View {
       ChatInputView(inputText: $inputText, onSend: sendMessage, pendingAttachments: $pendingAttachments)
         .environment(state)
     }
+    .onChange(of: conversation.id) {
+      pendingAttachments = []
+    }
   }
 
   // MARK: - Toolbar

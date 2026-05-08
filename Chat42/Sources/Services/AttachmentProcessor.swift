@@ -63,6 +63,9 @@ struct AttachmentProcessor {
         let text = (0..<doc.pageCount)
           .compactMap { doc.page(at: $0)?.string }
           .joined(separator: "\n")
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+          throw AttachmentProcessingError.pdfExtractionFailed(file.name)
+        }
         blocks.append("[File: \(file.name)]\n\(text)\n---")
 
       case .image:
