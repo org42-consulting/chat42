@@ -51,9 +51,46 @@ struct GatewayChatRequest: Encodable {
   let temperature: Double
 }
 
+// Supports both plain-text and multimodal (image) content.
+enum ContentPayload: Encodable {
+  case text(String)
+  case parts([ContentPart])
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    switch self {
+    case .text(let string): try container.encode(string)
+    case .parts(let parts): try container.encode(parts)
+    }
+  }
+}
+
+struct ContentPart: Encodable {
+  let type: String
+  let text: String?
+  let imageURL: ImageURLPayload?
+
+  enum CodingKeys: String, CodingKey {
+    case type, text
+    case imageURL = "image_url"
+  }
+
+  static func textPart(_ string: String) -> ContentPart {
+    ContentPart(type: "text", text: string, imageURL: nil)
+  }
+
+  static func imagePart(dataURI: String) -> ContentPart {
+    ContentPart(type: "image_url", text: nil, imageURL: ImageURLPayload(url: dataURI))
+  }
+}
+
+struct ImageURLPayload: Encodable {
+  let url: String
+}
+
 struct GatewayChatMessage: Encodable {
   let role: String
-  let content: String
+  let content: ContentPayload
 }
 
 struct GatewayChatChunk: Decodable {
@@ -144,8 +181,14 @@ actor GatewayService {
           return
         }
 
-        let chatMessages = messages.map {
-          GatewayChatMessage(role: $0.role.rawValue, content: $0.content)
+        let chatMessages = messages.map { msg -> GatewayChatMessage in
+          if let images = msg.images, !images.isEmpty {
+            var parts: [ContentPart] = []
+            if !msg.content.isEmpty { parts.append(.textPart(msg.content)) }
+            parts += images.map { ContentPart.imagePart(dataURI: $0) }
+            return GatewayChatMessage(role: msg.role.rawValue, content: .parts(parts))
+          }
+          return GatewayChatMessage(role: msg.role.rawValue, content: .text(msg.content))
         }
         let body = GatewayChatRequest(
           model: model,
