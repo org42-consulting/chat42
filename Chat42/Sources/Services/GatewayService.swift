@@ -75,6 +75,13 @@ struct ContentPart: Encodable {
     case imageURL = "image_url"
   }
 
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(type, forKey: .type)
+    try container.encodeIfPresent(text, forKey: .text)
+    try container.encodeIfPresent(imageURL, forKey: .imageURL)
+  }
+
   static func textPart(_ string: String) -> ContentPart {
     ContentPart(type: "text", text: string, imageURL: nil)
   }
