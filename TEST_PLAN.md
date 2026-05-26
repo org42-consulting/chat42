@@ -1,4 +1,4 @@
-# Test Plan for Chat42 App Store Submission
+# Test Plan for Chat42
 
 ## Overview
 This document outlines the testing procedures to ensure Chat42 meets App Store requirements and functions properly before submission.
