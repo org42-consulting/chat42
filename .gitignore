@@ -21,7 +21,6 @@ DerivedData/
 # Build output
 build/
 Chat42.app/
-Chat42/
 
 # macOS
 .DS_Store

@@ -193,11 +193,13 @@ struct SelectableText: View {
   init(_ text: String) { self.text = text }
 
   var body: some View {
-    Text(attributedContent)
-  }
-
-  private var attributedContent: AttributedString {
-    (try? AttributedString(markdown: text)) ?? AttributedString(text)
+    text.components(separatedBy: "\n")
+      .enumerated()
+      .reduce(Text("")) { result, pair in
+        let (i, line) = pair
+        let lineText = (try? Text(AttributedString(markdown: line))) ?? Text(line)
+        return i == 0 ? lineText : result + Text("\n") + lineText
+      }
   }
 }
 
