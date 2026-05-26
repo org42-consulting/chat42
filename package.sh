@@ -4,7 +4,7 @@
 set -eou pipefail
 
 APP_NAME="Chat42"
-APP_BUNDLE="${APP_NAME}.app"
+APP_BUNDLE="build/${APP_NAME}.app"
 DMG_NAME="${APP_NAME}.dmg"
 STAGING_DIR="$(mktemp -d)"
 
