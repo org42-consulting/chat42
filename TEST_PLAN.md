@@ -52,7 +52,7 @@ This document outlines the testing procedures to ensure Chat42 meets App Store r
 - [ ] No insecure HTTP connections (except localhost for local testing)
 
 ## Compatibility Testing
-- [ ] Works on macOS 13.0 and later
+- [ ] Works on macOS 14.0 and later
 - [ ] Works on Apple Silicon (M1/M2/M3/M4/M5) Macs
 - [ ] Memory usage is reasonable
 - [ ] Performance is acceptable with different model sizes

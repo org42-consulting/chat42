@@ -165,6 +165,9 @@ struct ChatView: View {
   }
 
   private func clearConversation() {
+    // Stop first, or the in-flight task keeps streaming into a message that is no
+    // longer in the transcript and the toolbar stays stuck on "Generating…".
+    if state.isSending { state.stopStreaming() }
     conversation.messages = conversation.messages.filter { $0.role == .system }
     state.persistConversations()
   }

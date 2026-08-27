@@ -32,6 +32,7 @@
 "input.send.help" = "Send message (↩)";
 "input.stop.help" = "Stop generating";
 "input.attach.help" = "Attach file";
+"input.attach.failed" = "Could not attach file";
 
 /* Model selector */
 "model.backend.label" = "Backend";
@@ -46,10 +47,17 @@
 
 /* Messages */
 "message.copy.help" = "Copy message";
+"message.attachments.a11y" = "Attachments";
+"attachment.remove.a11y" = "Remove %@";
+
+/* Alerts */
+"alert.error.title" = "Error";
+"alert.ok" = "OK";
 
 /* Menu */
 "menu.new_chat" = "New Chat";
 "menu.refresh_models" = "Refresh Ollama Models";
+"menu.model" = "Model";
 
 /* Settings tabs */
 "settings.tab.general" = "General";
@@ -168,4 +176,5 @@
 "error.gateway.auth_failed" = "Authentication failed. Check your API key.";
 "error.gateway.invalid_response" = "Gateway returned HTTP %lld";
 "error.gateway.api_error" = "Gateway error: %@";
+"error.gateway.unsupported_parameter" = "This model rejected the '%@' setting.";
 "error.no_gateway_model" = "No gateway model selected.";

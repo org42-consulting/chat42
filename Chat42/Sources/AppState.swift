@@ -39,25 +39,50 @@ final class AppState {
   private var activeSendTask: Task<Void, Never>?
 
   // MARK: - Settings
-  var ollamaBaseURL: String = "http://localhost:11434"
+  //
+  // Everything here is written back to UserDefaults by `applySettings()` /
+  // `applyGatewaySettings(...)` and restored in `init()`. The Gateway API key is
+  // the exception — it lives in the Keychain, never in defaults.
+  private enum DefaultsKey {
+    static let ollamaBaseURL = "ollamaBaseURL"
+    static let temperature = "temperature"
+    static let systemPrompt = "systemPrompt"
+    static let gatewayBaseURL = "gatewayBaseURL"
+    static let gatewayAPIKey = "gatewayAPIKey"
+  }
+
+  static let defaultOllamaBaseURL = "http://localhost:11434"
+
+  var ollamaBaseURL: String = AppState.defaultOllamaBaseURL
   var temperature: Double = 0.7
   var systemPrompt: String = String(localized: "default.system_prompt")
-  var showTokenCount: Bool = false
 
-  // Gateway settings (URL stored in UserDefaults, key in Keychain)
   var gatewayBaseURL: String = ""
-  // API key is not stored here — always read/write via KeychainHelper directly
 
   // MARK: - Services
   let ollamaService: OllamaService
   let gatewayService: GatewayService
 
   init() {
-    ollamaService = OllamaService(baseURL: "http://localhost:11434")
-    let savedURL = UserDefaults.standard.string(forKey: "gatewayBaseURL") ?? ""
-    let savedKey = KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
-    gatewayService = GatewayService(baseURL: savedURL, apiKey: savedKey)
-    gatewayBaseURL = savedURL
+    let defaults = UserDefaults.standard
+    let savedOllamaURL =
+      defaults.string(forKey: DefaultsKey.ollamaBaseURL) ?? AppState.defaultOllamaBaseURL
+    let savedGatewayURL = defaults.string(forKey: DefaultsKey.gatewayBaseURL) ?? ""
+    let savedKey = KeychainHelper.load(forKey: DefaultsKey.gatewayAPIKey) ?? ""
+
+    // Both services are `let`, so they have to be assigned before `self` is usable.
+    ollamaService = OllamaService(baseURL: savedOllamaURL)
+    gatewayService = GatewayService(baseURL: savedGatewayURL, apiKey: savedKey)
+
+    ollamaBaseURL = savedOllamaURL
+    gatewayBaseURL = savedGatewayURL
+    temperature = (defaults.object(forKey: DefaultsKey.temperature) as? Double) ?? temperature
+    // Distinguish "never set" from "deliberately cleared" — an empty system prompt
+    // is a valid choice and must not fall back to the default text.
+    if let savedPrompt = defaults.string(forKey: DefaultsKey.systemPrompt) {
+      systemPrompt = savedPrompt
+    }
+
     loadPersistedConversations()
   }
 
@@ -83,9 +108,13 @@ final class AppState {
     persistConversations()
   }
 
-  func deleteConversations(at offsets: IndexSet) {
-    let toDelete = offsets.map { conversations[$0] }
-    toDelete.forEach { deleteConversation($0) }
+  /// `visible` must be the exact array the List was built from: when a search filter
+  /// is active, `onDelete` reports indices into the filtered rows, not into
+  /// `conversations`, and resolving them against the full list deletes the wrong chats.
+  func deleteConversations(at offsets: IndexSet, in visible: [Conversation]) {
+    offsets.filter { $0 < visible.count }
+      .map { visible[$0] }
+      .forEach { deleteConversation($0) }
   }
 
   func renameConversation(_ conversation: Conversation, title: String) {
@@ -167,7 +196,8 @@ final class AppState {
     } catch {
       let errMsg = Message(
         role: .assistant,
-        content: String(format: String(localized: "error.generic"), error.localizedDescription)
+        content: String(format: String(localized: "error.generic"), error.localizedDescription),
+        isError: true
       )
       conversation.messages.append(errMsg)
       persistConversations()
@@ -176,7 +206,8 @@ final class AppState {
 
     // MLX does not support image attachments.
     if activeBackend == .mlx && !imageDataURIs.isEmpty {
-      let errMsg = Message(role: .assistant, content: String(localized: "error.mlx_no_images"))
+      let errMsg = Message(
+        role: .assistant, content: String(localized: "error.mlx_no_images"), isError: true)
       conversation.messages.append(errMsg)
       persistConversations()
       return
@@ -196,6 +227,10 @@ final class AppState {
     let userMessage = Message(role: .user, content: trimmedText, attachments: messageAttachments)
     conversation.messages.append(userMessage)
     conversation.updatedAt = .now
+    // Record what actually served this turn. The values captured at creation time
+    // are stale whenever the model list had not loaded yet, or the user switched.
+    conversation.modelName = selectedModelName
+    conversation.backend = activeBackend
 
     let assistantMessage = Message(role: .assistant, content: "", isStreaming: true)
     conversation.messages.append(assistantMessage)
@@ -210,7 +245,14 @@ final class AppState {
     do {
       // Build context messages from conversation history.
       var contextMessages = conversation.messages
-        .filter { $0.role != .assistant || $0 !== assistantMessage }
+        .filter { message in
+          if message === assistantMessage { return false }  // this turn's placeholder
+          if message.isError { return false }  // never replay our own error text
+          // A cancelled turn can leave an empty assistant message behind; some
+          // providers reject empty content outright.
+          if message.role == .assistant && message.content.isEmpty { return false }
+          return true
+        }
         .map { ChatMessage(role: $0.role, content: $0.content) }
 
       // Inject file context and images into the current (last) user message only.
@@ -228,6 +270,7 @@ final class AppState {
       case .ollama:
         guard let model = selectedOllamaModel else {
           assistantMessage.content = String(localized: "error.no_ollama_model")
+          assistantMessage.isError = true
           return
         }
         let stream = await ollamaService.chat(model: model.name, messages: contextMessages, temperature: temperature)
@@ -240,6 +283,7 @@ final class AppState {
         let mlx = MLXService.shared
         guard mlx.loadedModelId != nil else {
           assistantMessage.content = String(localized: "error.no_mlx_model")
+          assistantMessage.isError = true
           return
         }
         let stream = mlx.chat(messages: contextMessages, temperature: Float(temperature))
@@ -251,6 +295,7 @@ final class AppState {
       case .gateway:
         guard let model = selectedGatewayModel else {
           assistantMessage.content = String(localized: "error.no_gateway_model")
+          assistantMessage.isError = true
           return
         }
         let stream = await gatewayService.chat(model: model.id, messages: contextMessages, temperature: temperature)
@@ -264,6 +309,7 @@ final class AppState {
     } catch {
       assistantMessage.content = String(
         format: String(localized: "error.generic"), error.localizedDescription)
+      assistantMessage.isError = true
     }
   }
 
@@ -279,14 +325,19 @@ final class AppState {
   // MARK: - Settings sync
 
   func applySettings() async {
+    let defaults = UserDefaults.standard
+    defaults.set(ollamaBaseURL, forKey: DefaultsKey.ollamaBaseURL)
+    defaults.set(temperature, forKey: DefaultsKey.temperature)
+    defaults.set(systemPrompt, forKey: DefaultsKey.systemPrompt)
+
     await ollamaService.updateBaseURL(ollamaBaseURL)
     await refreshOllamaModels(reportError: true)
   }
 
   func applyGatewaySettings(baseURL: String, apiKey: String) async {
     gatewayBaseURL = baseURL
-    UserDefaults.standard.set(baseURL, forKey: "gatewayBaseURL")
-    KeychainHelper.save(apiKey, forKey: "gatewayAPIKey")
+    UserDefaults.standard.set(baseURL, forKey: DefaultsKey.gatewayBaseURL)
+    KeychainHelper.save(apiKey, forKey: DefaultsKey.gatewayAPIKey)
     await gatewayService.update(baseURL: baseURL, apiKey: apiKey)
     await refreshGatewayModels()
   }

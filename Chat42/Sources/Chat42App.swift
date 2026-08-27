@@ -22,7 +22,7 @@ struct Chat42App: App {
         .keyboardShortcut("n", modifiers: .command)
         Divider()
       }
-      CommandMenu("Model") {
+      CommandMenu("menu.model") {
         ForEach(AIBackend.allCases, id: \.self) { backend in
           Button(backend.rawValue) {
             appState.activeBackend = backend

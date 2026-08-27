@@ -55,7 +55,7 @@ Gateway supports OpenAI-compatible APIs, allowing you to connect to services lik
 
 ### Prerequisites
 
-- macOS 13 or later (for MLX support)
+- macOS 14 or later
 - For Ollama: Install [Ollama](https://ollama.com/download) on your machine
 - For MLX: Running on Apple Silicon (M1/M2/M3) Mac
 
