@@ -259,10 +259,18 @@ struct SettingsView: View {
             } label: {
               HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                  Text(model.displayName)
-                    .font(.callout)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
+                  HStack(spacing: 5) {
+                    Text(model.displayName)
+                      .font(.callout)
+                      .fontWeight(.medium)
+                      .foregroundStyle(.primary)
+                    if model.isImageGeneration {
+                      Image(systemName: "photo")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .help(String(localized: "model.gateway.section.images"))
+                    }
+                  }
                   if let owner = model.ownedBy, !owner.isEmpty {
                     Text(owner)
                       .font(.caption)

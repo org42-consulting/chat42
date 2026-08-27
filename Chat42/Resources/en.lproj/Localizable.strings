@@ -17,6 +17,7 @@
 /* Chat */
 "chat.new" = "New Chat";
 "chat.generating" = "Generating…";
+"chat.generating_image" = "Generating image…";
 "chat.clear" = "Clear conversation";
 "chat.welcome.subtitle" = "Your personal AI assistant, powered by Org42.";
 "chat.welcome.try_asking" = "Try asking:";
@@ -49,6 +50,17 @@
 "message.copy.help" = "Copy message";
 "message.attachments.a11y" = "Attachments";
 "attachment.remove.a11y" = "Remove %@";
+
+/* Generated images */
+"image.save" = "Save";
+"image.copy" = "Copy";
+"image.copied" = "Copied";
+"image.missing" = "Image no longer available";
+
+/* Code blocks */
+"code.plain" = "Code";
+"code.copy" = "Copy code";
+"code.save" = "Save to file…";
 
 /* Alerts */
 "alert.error.title" = "Error";
@@ -166,6 +178,8 @@
 "model.gateway.no_models_short" = "No models";
 "model.gateway.offline" = "Offline";
 "model.gateway.select" = "Select model";
+"model.gateway.section.chat" = "Chat";
+"model.gateway.section.images" = "Images";
 
 /* Sidebar gateway status */
 "sidebar.gateway.online" = "Gateway";
@@ -177,4 +191,8 @@
 "error.gateway.invalid_response" = "Gateway returned HTTP %lld";
 "error.gateway.api_error" = "Gateway error: %@";
 "error.gateway.unsupported_parameter" = "This model rejected the '%@' setting.";
+"error.gateway.model_unavailable" = "This gateway lists '%@' but does not serve it.";
+"error.gateway.no_image" = "The gateway returned no image data.";
+"error.image_no_attachments" = "Image models cannot take attachments. Remove the file and describe the image instead.";
+"error.image_no_prompt" = "Describe the image you want to generate.";
 "error.no_gateway_model" = "No gateway model selected.";

@@ -36,4 +36,27 @@ struct MessageAttachment: Codable, Identifiable, Hashable {
   let id: UUID
   let name: String
   let type: AttachmentType
+  /// Filename inside `ImageStore` for attachments whose bytes the app itself owns —
+  /// model-generated images. Nil for user-attached files, whose bytes are still
+  /// never written to disk.
+  let storedFilename: String?
+
+  init(id: UUID, name: String, type: AttachmentType, storedFilename: String? = nil) {
+    self.id = id
+    self.name = name
+    self.type = type
+    self.storedFilename = storedFilename
+  }
+
+  // Decoded leniently so conversations written before generated images existed
+  // still load. Encoding stays synthesized.
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    id = try c.decode(UUID.self, forKey: .id)
+    name = try c.decode(String.self, forKey: .name)
+    type = try c.decode(AttachmentType.self, forKey: .type)
+    storedFilename = try? c.decode(String.self, forKey: .storedFilename)
+  }
+
+  enum CodingKeys: String, CodingKey { case id, name, type, storedFilename }
 }
