@@ -14,9 +14,7 @@ struct ModelSelectorView: View {
         )
       ) {
         ForEach(AIBackend.allCases, id: \.self) { backend in
-          Label(
-            backend.rawValue, systemImage: backend == .ollama ? "server.rack" : "apple.terminal"
-          ).tag(backend)
+          Label(backend.rawValue, systemImage: backend.systemImage).tag(backend)
         }
       }
       .pickerStyle(.segmented)
@@ -167,17 +165,17 @@ struct ModelSelectorView: View {
         .menuStyle(.borderlessButton)
       } else {
         Menu {
-          ForEach(state.gatewayModels) { model in
-            Button {
-              state.selectedGatewayModel = model
-            } label: {
-              HStack {
-                Text(model.displayName)
-                if model.id == state.selectedGatewayModel?.id {
-                  Spacer()
-                  Image(systemName: "checkmark")
-                }
-              }
+          // Image models go to a different endpoint, so they are listed apart
+          // rather than mixed in with models that return text.
+          let chatModels = state.gatewayModels.filter { !$0.isImageGeneration }
+          let imageModels = state.gatewayModels.filter(\.isImageGeneration)
+
+          Section(String(localized: "model.gateway.section.chat")) {
+            ForEach(chatModels) { model in gatewayModelButton(model) }
+          }
+          if !imageModels.isEmpty {
+            Section(String(localized: "model.gateway.section.images")) {
+              ForEach(imageModels) { model in gatewayModelButton(model) }
             }
           }
         } label: {
@@ -196,6 +194,21 @@ struct ModelSelectorView: View {
     }
   }
 
+  @ViewBuilder
+  private func gatewayModelButton(_ model: GatewayModelInfo) -> some View {
+    Button {
+      state.selectedGatewayModel = model
+    } label: {
+      HStack {
+        Text(model.displayName)
+        if model.id == state.selectedGatewayModel?.id {
+          Spacer()
+          Image(systemName: "checkmark")
+        }
+      }
+    }
+  }
+
   // MARK: - MLX picker
 
   private var mlxModelPicker: some View {
@@ -203,7 +216,14 @@ struct ModelSelectorView: View {
       ForEach(MLXModelInfo.bundled) { model in
         Button {
           state.selectedMLXModel = model
-          Task { try? await mlxService.loadModel(repoId: model.repoId) }
+          // Picking a model that isn't downloaded yet used to fail silently here.
+          Task {
+            do {
+              try await mlxService.loadModel(repoId: model.repoId)
+            } catch {
+              state.error = error.localizedDescription
+            }
+          }
         } label: {
           HStack {
             VStack(alignment: .leading) {

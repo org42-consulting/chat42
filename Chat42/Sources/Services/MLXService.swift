@@ -377,6 +377,10 @@ private final class HFDownloadProgressDelegate: NSObject, URLSessionDownloadDele
   }
 
   func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    // Last callback for every task, success or failure. A delegate session retains
+    // its delegate until invalidated, so without this both leak for the lifetime of
+    // the process — once per downloaded model file.
+    defer { session.finishTasksAndInvalidate() }
     guard let error, !completed else { return }
     completed = true
     continuation?.resume(throwing: error)

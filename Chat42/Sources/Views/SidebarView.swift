@@ -112,7 +112,7 @@ struct SidebarView: View {
           )
           .listRowSeparator(.hidden)
       }
-      .onDelete { state.deleteConversations(at: $0) }
+      .onDelete { state.deleteConversations(at: $0, in: filteredConversations) }
     }
     .listStyle(.sidebar)
     .scrollContentBackground(.hidden)
@@ -137,7 +137,7 @@ struct SidebarView: View {
             .fontWeight(.medium)
             .lineLimit(1)
           HStack(spacing: 4) {
-            Image(systemName: conv.backend == .ollama ? "server.rack" : "apple.terminal")
+            Image(systemName: conv.backend.systemImage)
               .font(.caption2)
               .foregroundStyle(.tertiary)
             Text(conv.modelName.isEmpty ? "—" : conv.modelName)

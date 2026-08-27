@@ -3,13 +3,15 @@
 
 set -eou pipefail
 
+ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="Chat42"
-APP_BUNDLE="build/${APP_NAME}.app"
-DMG_NAME="${APP_NAME}.dmg"
+# build.sh assembles the bundle under build/ — keep these in step.
+APP_BUNDLE="${ROOT}/build/${APP_NAME}.app"
+DMG_NAME="${ROOT}/${APP_NAME}.dmg"
 STAGING_DIR="$(mktemp -d)"
 
 if [ ! -d "${APP_BUNDLE}" ]; then
-    echo "❌ ${APP_BUNDLE} not found. Run build.sh first."
+    echo "❌ ${APP_BUNDLE} not found. Run ./build.sh first."
     exit 1
 fi
 

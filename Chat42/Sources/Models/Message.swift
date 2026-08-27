@@ -14,10 +14,13 @@ final class Message: Identifiable, Hashable {
   var isStreaming: Bool
   let timestamp: Date
   var attachments: [MessageAttachment]
+  /// Locally generated failure text, not a real model turn. Shown in the transcript
+  /// but excluded from the context sent on later turns.
+  var isError: Bool
 
   init(
     id: UUID = UUID(), role: MessageRole, content: String, isStreaming: Bool = false,
-    timestamp: Date = .now, attachments: [MessageAttachment] = []
+    timestamp: Date = .now, attachments: [MessageAttachment] = [], isError: Bool = false
   ) {
     self.id = id
     self.role = role
@@ -25,6 +28,7 @@ final class Message: Identifiable, Hashable {
     self.isStreaming = isStreaming
     self.timestamp = timestamp
     self.attachments = attachments
+    self.isError = isError
   }
 
   static func == (lhs: Message, rhs: Message) -> Bool { lhs.id == rhs.id }
@@ -50,6 +54,7 @@ struct MessageDTO: Codable {
   let content: String
   let timestamp: Date
   let attachments: [MessageAttachment]
+  let isError: Bool
 
   init(message: Message) {
     id = message.id
@@ -57,6 +62,7 @@ struct MessageDTO: Codable {
     content = message.content
     timestamp = message.timestamp
     attachments = message.attachments
+    isError = message.isError
   }
 
   init(from decoder: Decoder) throws {
@@ -66,13 +72,16 @@ struct MessageDTO: Codable {
     content = try c.decode(String.self, forKey: .content)
     timestamp = try c.decode(Date.self, forKey: .timestamp)
     attachments = (try? c.decode([MessageAttachment].self, forKey: .attachments)) ?? []
+    isError = (try? c.decode(Bool.self, forKey: .isError)) ?? false
   }
 
   enum CodingKeys: String, CodingKey {
-    case id, role, content, timestamp, attachments
+    case id, role, content, timestamp, attachments, isError
   }
 
   func toMessage() -> Message {
-    Message(id: id, role: role, content: content, timestamp: timestamp, attachments: attachments)
+    Message(
+      id: id, role: role, content: content, timestamp: timestamp, attachments: attachments,
+      isError: isError)
   }
 }

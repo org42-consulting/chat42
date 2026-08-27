@@ -41,6 +41,11 @@ struct OllamaOptions: Codable {
   }
 }
 
+struct OllamaPullRequest: Codable {
+  let name: String
+  let stream: Bool
+}
+
 struct OllamaChatResponse: Codable {
   let model: String
   let message: OllamaChatMessage?
@@ -88,7 +93,7 @@ actor OllamaService {
       return decoded.models.sorted { $0.name < $1.name }
     } catch let error as OllamaError {
       throw error
-    } catch let urlError as URLError {
+    } catch is URLError {
       throw OllamaError.unreachable(baseURL)
     } catch {
       throw OllamaError.decodingError(error)
@@ -181,7 +186,9 @@ actor OllamaService {
           return
         }
 
-        let body = try? JSONEncoder().encode(["name": name, "stream": "true"])
+        // Encoded from a struct, not a [String: String] — `stream` must be a JSON
+        // boolean; sending the string "true" makes Ollama reject the request.
+        let body = try? JSONEncoder().encode(OllamaPullRequest(name: name, stream: true))
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

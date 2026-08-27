@@ -74,27 +74,45 @@ struct MessageBubbleView: View {
       )
   }
 
+  /// Images the app generated and owns bytes for — rendered inline.
+  private var generatedImages: [MessageAttachment] {
+    message.attachments.filter { $0.type == .image && $0.storedFilename != nil }
+  }
+
+  /// User-attached files, whose bytes are never persisted — shown as chips only.
+  private var chipAttachments: [MessageAttachment] {
+    message.attachments.filter { $0.storedFilename == nil }
+  }
+
   private var bubbleContent: some View {
-    VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
-      if !message.attachments.isEmpty {
+    VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+      ForEach(generatedImages) { attachment in
+        GeneratedImageView(attachment: attachment)
+      }
+
+      if !chipAttachments.isEmpty {
         attachmentChips
       }
-      ZStack(alignment: isUser ? .bottomTrailing : .bottomLeading) {
-        bubbleText
-          .padding(.horizontal, 14)
-          .padding(.vertical, 10)
-          .background(
-            isUser ? Color.userBubble : Color.assistantBubble,
-            in: bubbleShape
-          )
-          .overlay(
-            bubbleShape
-              .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
-          )
 
-        if message.isStreaming {
-          typingIndicator
-            .offset(x: isUser ? -10 : 10, y: -6)
+      // A generated-image message carries no text, so it gets no empty bubble.
+      if !message.content.isEmpty || message.isStreaming {
+        ZStack(alignment: isUser ? .bottomTrailing : .bottomLeading) {
+          bubbleText
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(
+              isUser ? Color.userBubble : Color.assistantBubble,
+              in: bubbleShape
+            )
+            .overlay(
+              bubbleShape
+                .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
+            )
+
+          if message.isStreaming {
+            typingIndicator
+              .offset(x: isUser ? -10 : 10, y: -6)
+          }
         }
       }
 
@@ -121,14 +139,14 @@ struct MessageBubbleView: View {
   private var attachmentChips: some View {
     ScrollView(.horizontal, showsIndicators: false) {
       HStack(spacing: 6) {
-        ForEach(message.attachments) { attachment in
+        ForEach(chipAttachments) { attachment in
           AttachmentChipView(name: attachment.name, type: attachment.type)
         }
       }
       .padding(.vertical, 2)
     }
     .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
-    .accessibilityLabel("Attachments")
+    .accessibilityLabel(Text("message.attachments.a11y"))
   }
 
   private var bubbleText: some View {
@@ -148,12 +166,30 @@ struct MessageBubbleView: View {
               )
           }
         }
-      } else {
+      } else if isUser {
+        // Your own input is shown verbatim — no code-block affordances on it.
         SelectableText(message.content)
           .textSelection(.enabled)
           .font(.body)
-          .foregroundStyle(isUser ? .white : .primary)
+          .foregroundStyle(.white)
           .fixedSize(horizontal: false, vertical: true)
+      } else {
+        // Replies are split into prose and fenced code blocks. With no fences this
+        // is a single text segment, rendering exactly as it did before.
+        VStack(alignment: .leading, spacing: 8) {
+          ForEach(MessageSegment.parse(message.content)) { segment in
+            switch segment.kind {
+            case .text(let body):
+              SelectableText(body)
+                .textSelection(.enabled)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            case .code(let language, let body):
+              CodeBlockView(language: language, code: body)
+            }
+          }
+        }
       }
     }
   }

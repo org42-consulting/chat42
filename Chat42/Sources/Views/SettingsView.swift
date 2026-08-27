@@ -259,10 +259,18 @@ struct SettingsView: View {
             } label: {
               HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                  Text(model.displayName)
-                    .font(.callout)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
+                  HStack(spacing: 5) {
+                    Text(model.displayName)
+                      .font(.callout)
+                      .fontWeight(.medium)
+                      .foregroundStyle(.primary)
+                    if model.isImageGeneration {
+                      Image(systemName: "photo")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .help(String(localized: "model.gateway.section.images"))
+                    }
+                  }
                   if let owner = model.ownedBy, !owner.isEmpty {
                     Text(owner)
                       .font(.caption)
@@ -544,7 +552,11 @@ struct SettingsView: View {
             mlxLoadingId = model.id
             state.selectedMLXModel = model
             Task {
-              try? await mlxService.loadModel(repoId: model.repoId)
+              do {
+                try await mlxService.loadModel(repoId: model.repoId)
+              } catch {
+                showToast(success: false, message: error.localizedDescription)
+              }
               mlxLoadingId = nil
             }
           }
@@ -615,9 +627,9 @@ struct SettingsView: View {
     state.temperature = temperature
     Task {
       await state.applySettings()
-      if !gatewayURL.isEmpty {
-        await state.applyGatewaySettings(baseURL: gatewayURL, apiKey: gatewayAPIKey)
-      }
+      // Applied unconditionally: skipping this when the field is empty made it
+      // impossible to clear a configured gateway — the old URL stayed in defaults.
+      await state.applyGatewaySettings(baseURL: gatewayURL, apiKey: gatewayAPIKey)
     }
     dismiss()
   }

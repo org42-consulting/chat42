@@ -20,7 +20,7 @@
 - Improved code signing configuration for App Store distribution
 
 ### Compatibility
-- macOS 13.0 or later required
+- macOS 14.0 or later required
 - Apple Silicon (M1/M2/M3/M4/M5) recommended for MLX support
 - Full compatibility with Ollama and Gateway backends
 

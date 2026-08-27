@@ -4,6 +4,14 @@ enum AIBackend: String, Codable, CaseIterable, Hashable {
   case ollama = "Ollama"
   case mlx = "MLX"
   case gateway = "Gateway"
+
+  var systemImage: String {
+    switch self {
+    case .ollama: return "server.rack"
+    case .mlx: return "apple.terminal"
+    case .gateway: return "globe"
+    }
+  }
 }
 
 struct OllamaModelInfo: Codable, Hashable, Identifiable {
