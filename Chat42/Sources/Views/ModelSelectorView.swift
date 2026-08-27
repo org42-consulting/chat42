@@ -201,7 +201,14 @@ struct ModelSelectorView: View {
       ForEach(MLXModelInfo.bundled) { model in
         Button {
           state.selectedMLXModel = model
-          Task { try? await mlxService.loadModel(repoId: model.repoId) }
+          // Picking a model that isn't downloaded yet used to fail silently here.
+          Task {
+            do {
+              try await mlxService.loadModel(repoId: model.repoId)
+            } catch {
+              state.error = error.localizedDescription
+            }
+          }
         } label: {
           HStack {
             VStack(alignment: .leading) {

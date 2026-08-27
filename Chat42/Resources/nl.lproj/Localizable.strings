@@ -32,6 +32,7 @@
 "input.send.help" = "Bericht verzenden (↩)";
 "input.stop.help" = "Stoppen met genereren";
 "input.attach.help" = "Bestand bijvoegen";
+"input.attach.failed" = "Kan bestand niet bijvoegen";
 
 /* Model selector */
 "model.backend.label" = "Backend";
@@ -46,10 +47,17 @@
 
 /* Messages */
 "message.copy.help" = "Bericht kopiëren";
+"message.attachments.a11y" = "Bijlagen";
+"attachment.remove.a11y" = "%@ verwijderen";
+
+/* Alerts */
+"alert.error.title" = "Fout";
+"alert.ok" = "OK";
 
 /* Menu */
 "menu.new_chat" = "Nieuw gesprek";
 "menu.refresh_models" = "Ollama-modellen vernieuwen";
+"menu.model" = "Model";
 
 /* Settings tabs */
 "settings.tab.general" = "Algemeen";

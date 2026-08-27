@@ -168,7 +168,7 @@ struct ChatInputView: View {
       // Silently ignore unsupported types dropped onto the input area.
     } catch {
       let alert = NSAlert()
-      alert.messageText = "Could not attach file"
+      alert.messageText = String(localized: "input.attach.failed")
       alert.informativeText = error.localizedDescription
       alert.alertStyle = .warning
       alert.runModal()

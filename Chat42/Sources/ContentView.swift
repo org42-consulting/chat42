@@ -42,15 +42,20 @@ struct ContentView: View {
     .preferredColorScheme(preferredColorScheme)
     .task {
       await state.refreshOllamaModels()
+      // Without this the Gateway backend shows "Offline" with an empty model list on
+      // every launch until the user opens Settings or hits refresh by hand.
+      if !state.gatewayBaseURL.isEmpty {
+        await state.refreshGatewayModels()
+      }
     }
     .alert(
-      "Error",
+      "alert.error.title",
       isPresented: Binding(
         get: { state.error != nil },
         set: { if !$0 { state.error = nil } }
       )
     ) {
-      Button("OK") { state.error = nil }
+      Button("alert.ok") { state.error = nil }
     } message: {
       Text(state.error ?? "")
     }

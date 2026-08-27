@@ -39,25 +39,50 @@ final class AppState {
   private var activeSendTask: Task<Void, Never>?
 
   // MARK: - Settings
-  var ollamaBaseURL: String = "http://localhost:11434"
+  //
+  // Everything here is written back to UserDefaults by `applySettings()` /
+  // `applyGatewaySettings(...)` and restored in `init()`. The Gateway API key is
+  // the exception — it lives in the Keychain, never in defaults.
+  private enum DefaultsKey {
+    static let ollamaBaseURL = "ollamaBaseURL"
+    static let temperature = "temperature"
+    static let systemPrompt = "systemPrompt"
+    static let gatewayBaseURL = "gatewayBaseURL"
+    static let gatewayAPIKey = "gatewayAPIKey"
+  }
+
+  static let defaultOllamaBaseURL = "http://localhost:11434"
+
+  var ollamaBaseURL: String = AppState.defaultOllamaBaseURL
   var temperature: Double = 0.7
   var systemPrompt: String = String(localized: "default.system_prompt")
-  var showTokenCount: Bool = false
 
-  // Gateway settings (URL stored in UserDefaults, key in Keychain)
   var gatewayBaseURL: String = ""
-  // API key is not stored here — always read/write via KeychainHelper directly
 
   // MARK: - Services
   let ollamaService: OllamaService
   let gatewayService: GatewayService
 
   init() {
-    ollamaService = OllamaService(baseURL: "http://localhost:11434")
-    let savedURL = UserDefaults.standard.string(forKey: "gatewayBaseURL") ?? ""
-    let savedKey = KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
-    gatewayService = GatewayService(baseURL: savedURL, apiKey: savedKey)
-    gatewayBaseURL = savedURL
+    let defaults = UserDefaults.standard
+    let savedOllamaURL =
+      defaults.string(forKey: DefaultsKey.ollamaBaseURL) ?? AppState.defaultOllamaBaseURL
+    let savedGatewayURL = defaults.string(forKey: DefaultsKey.gatewayBaseURL) ?? ""
+    let savedKey = KeychainHelper.load(forKey: DefaultsKey.gatewayAPIKey) ?? ""
+
+    // Both services are `let`, so they have to be assigned before `self` is usable.
+    ollamaService = OllamaService(baseURL: savedOllamaURL)
+    gatewayService = GatewayService(baseURL: savedGatewayURL, apiKey: savedKey)
+
+    ollamaBaseURL = savedOllamaURL
+    gatewayBaseURL = savedGatewayURL
+    temperature = (defaults.object(forKey: DefaultsKey.temperature) as? Double) ?? temperature
+    // Distinguish "never set" from "deliberately cleared" — an empty system prompt
+    // is a valid choice and must not fall back to the default text.
+    if let savedPrompt = defaults.string(forKey: DefaultsKey.systemPrompt) {
+      systemPrompt = savedPrompt
+    }
+
     loadPersistedConversations()
   }
 
@@ -83,9 +108,13 @@ final class AppState {
     persistConversations()
   }
 
-  func deleteConversations(at offsets: IndexSet) {
-    let toDelete = offsets.map { conversations[$0] }
-    toDelete.forEach { deleteConversation($0) }
+  /// `visible` must be the exact array the List was built from: when a search filter
+  /// is active, `onDelete` reports indices into the filtered rows, not into
+  /// `conversations`, and resolving them against the full list deletes the wrong chats.
+  func deleteConversations(at offsets: IndexSet, in visible: [Conversation]) {
+    offsets.filter { $0 < visible.count }
+      .map { visible[$0] }
+      .forEach { deleteConversation($0) }
   }
 
   func renameConversation(_ conversation: Conversation, title: String) {
@@ -296,14 +325,19 @@ final class AppState {
   // MARK: - Settings sync
 
   func applySettings() async {
+    let defaults = UserDefaults.standard
+    defaults.set(ollamaBaseURL, forKey: DefaultsKey.ollamaBaseURL)
+    defaults.set(temperature, forKey: DefaultsKey.temperature)
+    defaults.set(systemPrompt, forKey: DefaultsKey.systemPrompt)
+
     await ollamaService.updateBaseURL(ollamaBaseURL)
     await refreshOllamaModels(reportError: true)
   }
 
   func applyGatewaySettings(baseURL: String, apiKey: String) async {
     gatewayBaseURL = baseURL
-    UserDefaults.standard.set(baseURL, forKey: "gatewayBaseURL")
-    KeychainHelper.save(apiKey, forKey: "gatewayAPIKey")
+    UserDefaults.standard.set(baseURL, forKey: DefaultsKey.gatewayBaseURL)
+    KeychainHelper.save(apiKey, forKey: DefaultsKey.gatewayAPIKey)
     await gatewayService.update(baseURL: baseURL, apiKey: apiKey)
     await refreshGatewayModels()
   }

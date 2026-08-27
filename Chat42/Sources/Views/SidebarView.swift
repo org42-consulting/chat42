@@ -112,7 +112,7 @@ struct SidebarView: View {
           )
           .listRowSeparator(.hidden)
       }
-      .onDelete { state.deleteConversations(at: $0) }
+      .onDelete { state.deleteConversations(at: $0, in: filteredConversations) }
     }
     .listStyle(.sidebar)
     .scrollContentBackground(.hidden)
