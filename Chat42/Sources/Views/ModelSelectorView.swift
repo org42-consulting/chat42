@@ -14,9 +14,7 @@ struct ModelSelectorView: View {
         )
       ) {
         ForEach(AIBackend.allCases, id: \.self) { backend in
-          Label(
-            backend.rawValue, systemImage: backend == .ollama ? "server.rack" : "apple.terminal"
-          ).tag(backend)
+          Label(backend.rawValue, systemImage: backend.systemImage).tag(backend)
         }
       }
       .pickerStyle(.segmented)
