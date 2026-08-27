@@ -9,21 +9,37 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Swift 6.0 or newer is required, for two independent reasons:
+#   - mlx-swift-examples pulls in swift-jinja 2.x, whose Package.swift declares
+#     swift-tools-version 6.0. An older toolchain cannot resolve the graph at all.
+#   - `swift format` is only bundled with the toolchain from Swift 6.0.
+# macos-15 runners are Apple Silicon and ship Xcode 16.x, which satisfies both.
+# The runner default is used rather than a pinned Xcode path, because pinning a
+# specific version is what broke this workflow the first time it ran.
+
 jobs:
   test:
     name: Build and test
-    # Apple Silicon runner: MLX only builds its inference path under arch(arm64),
-    # so an Intel runner would compile a different app than the one that ships.
-    runs-on: macos-14
+    # Apple Silicon: MLX only compiles its inference path under arch(arm64), so an
+    # Intel runner would build a different app than the one that ships.
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app
-
       - name: Show toolchain
-        run: swift --version
+        run: |
+          swift --version
+          xcodebuild -version
+
+      - name: Require Swift 6.0+
+        run: |
+          version="$(swift --version 2>&1 | sed -nE 's/.*Apple Swift version ([0-9]+)\.([0-9]+).*/\1 \2/p' | head -1)"
+          major="${version% *}"
+          if [ -z "${major}" ] || [ "${major}" -lt 6 ]; then
+            echo "::error::Swift 6.0+ required (swift-jinja needs tools-version 6.0; swift format ships with 6.0). Found: $(swift --version 2>&1 | head -1)"
+            exit 1
+          fi
 
       - name: Cache SwiftPM dependencies
         uses: actions/cache@v4
@@ -40,7 +56,7 @@ jobs:
 
   lint:
     name: Format and localization checks
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - uses: actions/checkout@v4
@@ -57,14 +73,18 @@ jobs:
 
   package:
     name: Assemble app bundle
-    runs-on: macos-14
+    runs-on: macos-15
     needs: test
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+      - name: Cache SwiftPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
 
       # Signs ad-hoc when no Developer ID is present, which is what CI wants:
       # it proves the bundle assembles. package.sh refuses to notarize an ad-hoc
