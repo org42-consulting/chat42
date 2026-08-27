@@ -34,6 +34,9 @@ final class AppState {
   var gatewayReachable = false
   var isLoadingGatewayModels = false
   var isSending = false
+  /// Image generation is a single slow request rather than a token stream, so the
+  /// toolbar needs to say something different while it runs.
+  var isGeneratingImage = false
   var error: String?
 
   private var activeSendTask: Task<Void, Never>?
@@ -104,8 +107,28 @@ final class AppState {
     if selectedConversationId == conversation.id {
       selectedConversationId = conversations.first { $0.id != conversation.id }?.id
     }
+    discardStoredImages(in: conversation.messages)
     conversations.removeAll { $0.id == conversation.id }
     persistConversations()
+  }
+
+  /// Empties a conversation, keeping its system prompt.
+  func clearConversation(_ conversation: Conversation) {
+    if isSending { stopStreaming() }
+    let removed = conversation.messages.filter { $0.role != .system }
+    discardStoredImages(in: removed)
+    conversation.messages = conversation.messages.filter { $0.role == .system }
+    persistConversations()
+  }
+
+  /// Generated images are owned by the app, so they have to be cleaned up with the
+  /// messages that reference them or the store grows without bound.
+  private func discardStoredImages(in messages: [Message]) {
+    for message in messages {
+      for attachment in message.attachments {
+        if let filename = attachment.storedFilename { ImageStore.delete(filename) }
+      }
+    }
   }
 
   /// `visible` must be the exact array the List was built from: when a search filter
@@ -238,11 +261,20 @@ final class AppState {
     isSending = true
     defer {
       isSending = false
+      isGeneratingImage = false
       assistantMessage.isStreaming = false
       persistConversations()
     }
 
     do {
+      // Image models speak a different endpoint and take no conversation history,
+      // so they bypass the context-building and streaming path entirely.
+      if activeBackend == .gateway, selectedGatewayModel?.isImageGeneration == true {
+        try await generateImage(
+          prompt: trimmedText, attachments: attachments, into: assistantMessage)
+        return
+      }
+
       // Build context messages from conversation history.
       var contextMessages = conversation.messages
         .filter { message in
@@ -311,6 +343,54 @@ final class AppState {
         format: String(localized: "error.generic"), error.localizedDescription)
       assistantMessage.isError = true
     }
+  }
+
+  /// Runs one image generation and attaches the result to `message`.
+  private func generateImage(
+    prompt: String, attachments: [AttachedFile], into message: Message
+  ) async throws {
+    guard let model = selectedGatewayModel else {
+      message.content = String(localized: "error.no_gateway_model")
+      message.isError = true
+      return
+    }
+    guard attachments.isEmpty else {
+      // Editing an existing image is a different endpoint (/v1/images/edits).
+      message.content = String(localized: "error.image_no_attachments")
+      message.isError = true
+      return
+    }
+    guard !prompt.isEmpty else {
+      message.content = String(localized: "error.image_no_prompt")
+      message.isError = true
+      return
+    }
+
+    isGeneratingImage = true
+    message.isStreaming = true
+
+    let images = try await gatewayService.generateImage(model: model.id, prompt: prompt)
+    try Task.checkCancellation()
+
+    message.attachments = try images.map { data in
+      MessageAttachment(
+        id: UUID(),
+        name: Self.imageFilename(for: prompt),
+        type: .image,
+        storedFilename: try ImageStore.save(data)
+      )
+    }
+  }
+
+  /// A readable default for the save panel, derived from the prompt.
+  private static func imageFilename(for prompt: String) -> String {
+    let slug =
+      prompt
+      .lowercased()
+      .split(separator: " ").prefix(5)
+      .joined(separator: "-")
+      .filter { $0.isLetter || $0.isNumber || $0 == "-" }
+    return (slug.isEmpty ? "image" : slug) + ".png"
   }
 
   func stopStreaming() {

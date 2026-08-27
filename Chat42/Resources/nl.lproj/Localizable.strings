@@ -17,6 +17,7 @@
 /* Chat */
 "chat.new" = "Nieuw gesprek";
 "chat.generating" = "Bezig met genereren…";
+"chat.generating_image" = "Afbeelding genereren…";
 "chat.clear" = "Gesprek wissen";
 "chat.welcome.subtitle" = "Uw persoonlijk AI-assistent, aangeboden door Org42.";
 "chat.welcome.try_asking" = "Probeer te vragen:";
@@ -49,6 +50,17 @@
 "message.copy.help" = "Bericht kopiëren";
 "message.attachments.a11y" = "Bijlagen";
 "attachment.remove.a11y" = "%@ verwijderen";
+
+/* Generated images */
+"image.save" = "Bewaren";
+"image.copy" = "Kopiëren";
+"image.copied" = "Gekopieerd";
+"image.missing" = "Afbeelding niet meer beschikbaar";
+
+/* Code blocks */
+"code.plain" = "Code";
+"code.copy" = "Code kopiëren";
+"code.save" = "Bewaren als bestand…";
 
 /* Alerts */
 "alert.error.title" = "Fout";
@@ -166,6 +178,8 @@
 "model.gateway.no_models_short" = "Geen modellen";
 "model.gateway.offline" = "Offline";
 "model.gateway.select" = "Selecteer model";
+"model.gateway.section.chat" = "Chat";
+"model.gateway.section.images" = "Afbeeldingen";
 
 /* Sidebar gateway status */
 "sidebar.gateway.online" = "Gateway";
@@ -177,4 +191,8 @@
 "error.gateway.invalid_response" = "Gateway stuurde HTTP %lld";
 "error.gateway.api_error" = "Gateway-fout: %@";
 "error.gateway.unsupported_parameter" = "Dit model heeft de instelling '%@' geweigerd.";
+"error.gateway.model_unavailable" = "Deze gateway toont '%@' maar levert het niet.";
+"error.gateway.no_image" = "De gateway gaf geen afbeeldingsgegevens terug.";
+"error.image_no_attachments" = "Afbeeldingsmodellen accepteren geen bijlagen. Verwijder het bestand en beschrijf de afbeelding.";
+"error.image_no_prompt" = "Beschrijf de afbeelding die u wilt genereren.";
 "error.no_gateway_model" = "Geen gatewaymodel geselecteerd.";

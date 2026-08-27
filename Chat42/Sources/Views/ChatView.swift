@@ -40,7 +40,7 @@ struct ChatView: View {
           ProgressView()
             .scaleEffect(0.7)
             .frame(width: 14, height: 14)
-          Text("chat.generating")
+          Text(state.isGeneratingImage ? "chat.generating_image" : "chat.generating")
             .font(.caption)
             .foregroundStyle(.secondary)
         }
@@ -165,10 +165,6 @@ struct ChatView: View {
   }
 
   private func clearConversation() {
-    // Stop first, or the in-flight task keeps streaming into a message that is no
-    // longer in the transcript and the toolbar stays stuck on "Generating…".
-    if state.isSending { state.stopStreaming() }
-    conversation.messages = conversation.messages.filter { $0.role == .system }
-    state.persistConversations()
+    state.clearConversation(conversation)
   }
 }
