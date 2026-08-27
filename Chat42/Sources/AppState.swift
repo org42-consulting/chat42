@@ -167,7 +167,8 @@ final class AppState {
     } catch {
       let errMsg = Message(
         role: .assistant,
-        content: String(format: String(localized: "error.generic"), error.localizedDescription)
+        content: String(format: String(localized: "error.generic"), error.localizedDescription),
+        isError: true
       )
       conversation.messages.append(errMsg)
       persistConversations()
@@ -176,7 +177,8 @@ final class AppState {
 
     // MLX does not support image attachments.
     if activeBackend == .mlx && !imageDataURIs.isEmpty {
-      let errMsg = Message(role: .assistant, content: String(localized: "error.mlx_no_images"))
+      let errMsg = Message(
+        role: .assistant, content: String(localized: "error.mlx_no_images"), isError: true)
       conversation.messages.append(errMsg)
       persistConversations()
       return
@@ -196,6 +198,10 @@ final class AppState {
     let userMessage = Message(role: .user, content: trimmedText, attachments: messageAttachments)
     conversation.messages.append(userMessage)
     conversation.updatedAt = .now
+    // Record what actually served this turn. The values captured at creation time
+    // are stale whenever the model list had not loaded yet, or the user switched.
+    conversation.modelName = selectedModelName
+    conversation.backend = activeBackend
 
     let assistantMessage = Message(role: .assistant, content: "", isStreaming: true)
     conversation.messages.append(assistantMessage)
@@ -210,7 +216,14 @@ final class AppState {
     do {
       // Build context messages from conversation history.
       var contextMessages = conversation.messages
-        .filter { $0.role != .assistant || $0 !== assistantMessage }
+        .filter { message in
+          if message === assistantMessage { return false }  // this turn's placeholder
+          if message.isError { return false }  // never replay our own error text
+          // A cancelled turn can leave an empty assistant message behind; some
+          // providers reject empty content outright.
+          if message.role == .assistant && message.content.isEmpty { return false }
+          return true
+        }
         .map { ChatMessage(role: $0.role, content: $0.content) }
 
       // Inject file context and images into the current (last) user message only.
@@ -228,6 +241,7 @@ final class AppState {
       case .ollama:
         guard let model = selectedOllamaModel else {
           assistantMessage.content = String(localized: "error.no_ollama_model")
+          assistantMessage.isError = true
           return
         }
         let stream = await ollamaService.chat(model: model.name, messages: contextMessages, temperature: temperature)
@@ -240,6 +254,7 @@ final class AppState {
         let mlx = MLXService.shared
         guard mlx.loadedModelId != nil else {
           assistantMessage.content = String(localized: "error.no_mlx_model")
+          assistantMessage.isError = true
           return
         }
         let stream = mlx.chat(messages: contextMessages, temperature: Float(temperature))
@@ -251,6 +266,7 @@ final class AppState {
       case .gateway:
         guard let model = selectedGatewayModel else {
           assistantMessage.content = String(localized: "error.no_gateway_model")
+          assistantMessage.isError = true
           return
         }
         let stream = await gatewayService.chat(model: model.id, messages: contextMessages, temperature: temperature)
@@ -264,6 +280,7 @@ final class AppState {
     } catch {
       assistantMessage.content = String(
         format: String(localized: "error.generic"), error.localizedDescription)
+      assistantMessage.isError = true
     }
   }
 

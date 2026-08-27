@@ -168,4 +168,5 @@
 "error.gateway.auth_failed" = "Authentication failed. Check your API key.";
 "error.gateway.invalid_response" = "Gateway returned HTTP %lld";
 "error.gateway.api_error" = "Gateway error: %@";
+"error.gateway.unsupported_parameter" = "This model rejected the '%@' setting.";
 "error.no_gateway_model" = "No gateway model selected.";

@@ -168,4 +168,5 @@
 "error.gateway.auth_failed" = "Authenticatie mislukt. Controleer uw API-sleutel.";
 "error.gateway.invalid_response" = "Gateway stuurde HTTP %lld";
 "error.gateway.api_error" = "Gateway-fout: %@";
+"error.gateway.unsupported_parameter" = "Dit model heeft de instelling '%@' geweigerd.";
 "error.no_gateway_model" = "Geen gatewaymodel geselecteerd.";
