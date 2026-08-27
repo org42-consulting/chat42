@@ -1,5 +1,4 @@
 /* App name */
-"Chat42." = "Chat42.";
 
 /* Sidebar */
 "sidebar.title" = "Chat42.";
@@ -128,7 +127,6 @@
 "error.mlx.not_supported" = "MLX vereist Apple Silicon (M1+). Directe inferentie is niet beschikbaar.";
 "error.mlx.not_loaded" = "Geen MLX-model geladen. Selecteer er een in Instellingen → MLX.";
 "error.mlx.load_failed" = "Model laden mislukt: %@";
-"error.mlx.not_wired" = "MLX-inferentiepijplijn nog niet beschikbaar. Gebruik Ollama voor inferentie.";
 "mlx.status.preparing" = "Model voorbereiden…";
 "mlx.status.ready" = "Gereed";
 
@@ -139,15 +137,10 @@
 "error.ollama.decoding" = "Decodeersfout: %@";
 
 /* MLX model descriptions */
-"mlx.model.llama_1b.name" = "Llama 3.2 1B (4-bit)";
 "mlx.model.llama_1b.desc" = "Snel 1B-parametermodel, uitstekend voor snelle antwoorden";
-"mlx.model.llama_3b.name" = "Llama 3.2 3B (4-bit)";
 "mlx.model.llama_3b.desc" = "Gebalanceerd 3B-model met goede kwaliteit";
-"mlx.model.mistral_7b.name" = "Mistral 7B (4-bit)";
 "mlx.model.mistral_7b.desc" = "Hoogwaardig 7B-instructiemodel";
-"mlx.model.phi35.name" = "Phi 3.5 Mini (4-bit)";
 "mlx.model.phi35.desc" = "Microsoft's efficiënt klein taalmodel";
-"mlx.model.gemma_2b.name" = "Gemma 2 2B (4-bit)";
 "mlx.model.gemma_2b.desc" = "Google's compact instructiemodel";
 
 /* Defaults */
@@ -196,3 +189,48 @@
 "error.image_no_attachments" = "Afbeeldingsmodellen accepteren geen bijlagen. Verwijder het bestand en beschrijf de afbeelding.";
 "error.image_no_prompt" = "Beschrijf de afbeelding die u wilt genereren.";
 "error.no_gateway_model" = "Geen gatewaymodel geselecteerd.";
+
+
+/* Toegevoegd: bijlagen */
+"error.attachment.pdf_failed" = "Kon geen tekst uit %@ halen";
+"error.attachment.unreadable" = "Kon %@ niet lezen";
+"error.attachment.unsupported" = "Niet-ondersteund bestandstype: %@";
+"error.attachment.too_large" = "%1$@ is groter dan de limiet van %2$@.";
+"attachment.truncated" = "[…ingekort: de rest van dit bestand is niet meegestuurd.]";
+/* Toegevoegd: MLX */
+"error.mlx.not_downloaded" = "Model niet gedownload. Download het eerst via Instellingen → MLX.";
+"error.mlx.no_files" = "Geen modelbestanden gevonden in de repository.";
+"error.mlx.unsafe_path" = "Onveilig bestandspad uit de repository geweigerd: %@";
+"mlx.status.loading" = "Laden… %lld%%";
+"settings.mlx.cancel_help" = "Download annuleren";
+/* Toegevoegd: opslag en sleutelhanger */
+"error.persist_failed" = "Kon gesprekken niet opslaan: %@";
+"error.keychain_write_failed" = "Kon de API-sleutel niet in de sleutelhanger opslaan.";
+/* Toegevoegd: berichtacties */
+"message.copy" = "Kopiëren";
+"message.edit" = "Bewerken";
+"message.edit.cancel" = "Annuleren";
+"message.edit.resend" = "Opnieuw versturen";
+"message.regenerate" = "Opnieuw genereren";
+"message.delete" = "Verwijderen";
+"message.system.a11y" = "Systeembericht: %@";
+"message.waiting.a11y" = "Wachten op een antwoord";
+/* Toegevoegd: gespreksacties */
+"chat.export.help" = "Gesprek exporteren als Markdown";
+"chat.clear.confirm.title" = "Dit gesprek wissen?";
+"chat.clear.confirm.message" = "Alle berichten in dit gesprek worden verwijderd. Dit kan niet ongedaan worden gemaakt.";
+"chat.clear.confirm.action" = "Wissen";
+"alert.cancel" = "Annuleren";
+"sidebar.search.clear" = "Zoekopdracht wissen";
+"export.role.user" = "Jij";
+"export.role.assistant" = "Assistent";
+"export.attachments" = "Bijlagen";
+/* Toegevoegd: contextbudget */
+"settings.general.context.label" = "Contextgrootte";
+"settings.general.context.hint" = "Hoeveel geschiedenis wordt meegestuurd. Oudere beurten vervallen hierboven; bepaalt ook num_ctx van Ollama.";
+"mlx.model.llama31_8b.desc" = "8B-model met uitstekende kwaliteit";
+"mlx.model.llama31_70b.desc" = "Groot 70B-model met hoge kwaliteit";
+"mlx.model.qwen2_7b.desc" = "Instructiemodel van hoge kwaliteit van Alibaba";
+"mlx.model.llama3_8b.desc" = "8B-instructiemodel van Meta";
+"mlx.model.llama3_70b.desc" = "70B-instructiemodel van Meta";
+"mlx.model.phi3_medium.desc" = "Middelgroot taalmodel van Microsoft";

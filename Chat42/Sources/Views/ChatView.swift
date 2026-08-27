@@ -1,4 +1,6 @@
+import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ChatView: View {
   @Environment(AppState.self) private var state
@@ -6,6 +8,7 @@ struct ChatView: View {
   @State private var inputText = ""
   @State private var scrollProxy: ScrollViewProxy?
   @State private var pendingAttachments: [AttachedFile] = []
+  @State private var showClearConfirmation = false
 
   var visibleMessages: [Message] {
     conversation.messages.filter { $0.role != .system }
@@ -20,11 +23,27 @@ struct ChatView: View {
       } else {
         messageList
       }
-      ChatInputView(inputText: $inputText, onSend: sendMessage, pendingAttachments: $pendingAttachments)
-        .environment(state)
+      ChatInputView(
+        conversation: conversation,
+        inputText: $inputText,
+        onSend: sendMessage,
+        pendingAttachments: $pendingAttachments
+      )
+      .environment(state)
     }
     .onChange(of: conversation.id) {
       pendingAttachments = []
+    }
+    .confirmationDialog(
+      String(localized: "chat.clear.confirm.title"),
+      isPresented: $showClearConfirmation
+    ) {
+      Button(String(localized: "chat.clear.confirm.action"), role: .destructive) {
+        state.clearConversation(conversation)
+      }
+      Button(String(localized: "alert.cancel"), role: .cancel) {}
+    } message: {
+      Text("chat.clear.confirm.message")
     }
   }
 
@@ -35,18 +54,30 @@ struct ChatView: View {
       ModelSelectorView()
         .environment(state)
       Spacer()
-      if state.isSending {
+      if conversation.isSending {
         HStack(spacing: 6) {
           ProgressView()
             .scaleEffect(0.7)
             .frame(width: 14, height: 14)
-          Text(state.isGeneratingImage ? "chat.generating_image" : "chat.generating")
+          Text(conversation.isGeneratingImage ? "chat.generating_image" : "chat.generating")
             .font(.caption)
             .foregroundStyle(.secondary)
         }
       }
       Button {
-        clearConversation()
+        export()
+      } label: {
+        Image(systemName: "square.and.arrow.up")
+          .font(.callout)
+          .foregroundStyle(.secondary)
+      }
+      .buttonStyle(.plain)
+      .help(String(localized: "chat.export.help"))
+      .accessibilityLabel(Text("chat.export.help"))
+      .disabled(visibleMessages.isEmpty)
+
+      Button {
+        showClearConfirmation = true
       } label: {
         Image(systemName: "trash")
           .font(.callout)
@@ -54,6 +85,8 @@ struct ChatView: View {
       }
       .buttonStyle(.plain)
       .help(String(localized: "chat.clear"))
+      .accessibilityLabel(Text("chat.clear"))
+      .disabled(visibleMessages.isEmpty)
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 10)
@@ -70,6 +103,7 @@ struct ChatView: View {
           .resizable()
           .scaledToFit()
           .frame(width: 260)
+          .accessibilityHidden(true)
         Text("sidebar.title")
           .font(.largeTitle)
           .fontWeight(.bold)
@@ -129,9 +163,14 @@ struct ChatView: View {
       ScrollView {
         LazyVStack(spacing: 16) {
           ForEach(visibleMessages) { message in
-            MessageBubbleView(message: message)
-              .id(message.id)
-              .transition(.opacity.combined(with: .move(edge: .bottom)))
+            MessageBubbleView(
+              message: message,
+              conversation: conversation,
+              canRegenerate: message.id == lastAssistantMessageId
+            )
+            .environment(state)
+            .id(message.id)
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
           }
         }
         .padding(.vertical, 16)
@@ -139,17 +178,30 @@ struct ChatView: View {
       }
       .scrollContentBackground(.hidden)
       .background(.clear)
-      .onAppear { scrollProxy = proxy }
-      .onChange(of: conversation.messages.count) { scrollToBottom() }
+      .onAppear {
+        scrollProxy = proxy
+        scrollToBottom(animated: false)
+      }
+      .onChange(of: conversation.messages.count) { scrollToBottom(animated: true) }
       .onChange(of: conversation.messages.last?.content) {
-        if conversation.messages.last?.isStreaming == true { scrollToBottom() }
+        // Unanimated during streaming: the content updates ~20 times a second, and
+        // starting an animation per update stacks them into a visible stutter.
+        if conversation.messages.last?.isStreaming == true { scrollToBottom(animated: false) }
       }
     }
   }
 
-  private func scrollToBottom() {
+  private var lastAssistantMessageId: UUID? {
+    conversation.messages.last(where: { $0.role == .assistant })?.id
+  }
+
+  private func scrollToBottom(animated: Bool) {
     guard let lastId = visibleMessages.last?.id else { return }
-    withAnimation(.easeOut(duration: 0.2)) {
+    if animated {
+      withAnimation(.easeOut(duration: 0.2)) {
+        scrollProxy?.scrollTo(lastId, anchor: .bottom)
+      }
+    } else {
       scrollProxy?.scrollTo(lastId, anchor: .bottom)
     }
   }
@@ -161,10 +213,29 @@ struct ChatView: View {
     let attachments = pendingAttachments
     inputText = ""
     pendingAttachments = []
-    Task { await state.sendMessage(text, attachments: attachments) }
+    state.sendMessage(text, attachments: attachments)
   }
 
-  private func clearConversation() {
-    state.clearConversation(conversation)
+  private func export() {
+    let markdown = state.exportMarkdown(conversation)
+    let panel = NSSavePanel()
+    panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
+    panel.nameFieldStringValue = "\(sanitizedFilename(conversation.displayTitle)).md"
+    panel.begin { response in
+      guard response == .OK, let url = panel.url else { return }
+      DispatchQueue.main.async {
+        do {
+          try Data(markdown.utf8).write(to: url)
+        } catch {
+          state.error = error.localizedDescription
+        }
+      }
+    }
+  }
+
+  private func sanitizedFilename(_ title: String) -> String {
+    let cleaned = title.filter { $0.isLetter || $0.isNumber || $0 == " " || $0 == "-" }
+      .trimmingCharacters(in: .whitespaces)
+    return cleaned.isEmpty ? "conversation" : String(cleaned.prefix(60))
   }
 }

@@ -20,6 +20,7 @@ struct ModelSelectorView: View {
       .pickerStyle(.segmented)
       .frame(width: 160)
       .labelsHidden()
+      .accessibilityLabel(Text("model.backend.label"))
 
       Divider().frame(height: 20)
 
@@ -45,6 +46,7 @@ struct ModelSelectorView: View {
         }
         .buttonStyle(.plain)
         .help(String(localized: "model.refresh.help"))
+        .accessibilityLabel(Text("model.refresh.help"))
         .disabled(state.isLoadingModels)
       } else if state.activeBackend == .gateway {
         Button {
@@ -62,6 +64,7 @@ struct ModelSelectorView: View {
         }
         .buttonStyle(.plain)
         .help(String(localized: "model.refresh.help"))
+        .accessibilityLabel(Text("model.refresh.help"))
         .disabled(state.isLoadingGatewayModels)
       }
     }
@@ -230,7 +233,7 @@ struct ModelSelectorView: View {
               Text(model.name)
               Text(model.description).font(.caption).foregroundStyle(.secondary)
             }
-            if model.id == mlxService.loadedModelId {
+            if model.repoId == mlxService.loadedModelId {
               Spacer()
               Image(systemName: "checkmark")
             }

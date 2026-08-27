@@ -1,6 +1,25 @@
 import Foundation
 import SwiftUI
 
+/// Failures raised by the send pipeline itself, before any provider is contacted.
+enum SendError: LocalizedError {
+  case noModel(AIBackend)
+  case mlxDoesNotSupportImages
+  case imageModelTakesNoAttachments
+  case imageModelNeedsPrompt
+
+  var errorDescription: String? {
+    switch self {
+    case .noModel(.ollama): return String(localized: "error.no_ollama_model")
+    case .noModel(.mlx): return String(localized: "error.no_mlx_model")
+    case .noModel(.gateway): return String(localized: "error.no_gateway_model")
+    case .mlxDoesNotSupportImages: return String(localized: "error.mlx_no_images")
+    case .imageModelTakesNoAttachments: return String(localized: "error.image_no_attachments")
+    case .imageModelNeedsPrompt: return String(localized: "error.image_no_prompt")
+    }
+  }
+}
+
 @Observable
 @MainActor
 final class AppState {
@@ -33,13 +52,11 @@ final class AppState {
   var ollamaReachable = false
   var gatewayReachable = false
   var isLoadingGatewayModels = false
-  var isSending = false
-  /// Image generation is a single slow request rather than a token stream, so the
-  /// toolbar needs to say something different while it runs.
-  var isGeneratingImage = false
   var error: String?
 
-  private var activeSendTask: Task<Void, Never>?
+  /// One send task per conversation, so a reply streaming into one chat neither
+  /// blocks nor is cancelled by activity in another.
+  private var activeSendTasks: [UUID: Task<Void, Never>] = [:]
 
   // MARK: - Settings
   //
@@ -52,13 +69,18 @@ final class AppState {
     static let systemPrompt = "systemPrompt"
     static let gatewayBaseURL = "gatewayBaseURL"
     static let gatewayAPIKey = "gatewayAPIKey"
+    static let contextTokenLimit = "contextTokenLimit"
   }
 
   static let defaultOllamaBaseURL = "http://localhost:11434"
+  static let defaultContextTokenLimit = 8192
 
   var ollamaBaseURL: String = AppState.defaultOllamaBaseURL
   var temperature: Double = 0.7
   var systemPrompt: String = String(localized: "default.system_prompt")
+  /// How much conversation history to send. Older turns are dropped once the
+  /// estimate exceeds this; it is also mirrored into Ollama's `num_ctx`.
+  var contextTokenLimit: Int = AppState.defaultContextTokenLimit
 
   var gatewayBaseURL: String = ""
 
@@ -72,13 +94,17 @@ final class AppState {
       defaults.string(forKey: DefaultsKey.ollamaBaseURL) ?? AppState.defaultOllamaBaseURL
     let savedGatewayURL = defaults.string(forKey: DefaultsKey.gatewayBaseURL) ?? ""
     let savedKey = KeychainHelper.load(forKey: DefaultsKey.gatewayAPIKey) ?? ""
+    let savedContextLimit =
+      (defaults.object(forKey: DefaultsKey.contextTokenLimit) as? Int)
+      ?? AppState.defaultContextTokenLimit
 
     // Both services are `let`, so they have to be assigned before `self` is usable.
-    ollamaService = OllamaService(baseURL: savedOllamaURL)
+    ollamaService = OllamaService(baseURL: savedOllamaURL, contextTokenLimit: savedContextLimit)
     gatewayService = GatewayService(baseURL: savedGatewayURL, apiKey: savedKey)
 
     ollamaBaseURL = savedOllamaURL
     gatewayBaseURL = savedGatewayURL
+    contextTokenLimit = savedContextLimit
     temperature = (defaults.object(forKey: DefaultsKey.temperature) as? Double) ?? temperature
     // Distinguish "never set" from "deliberately cleared" — an empty system prompt
     // is a valid choice and must not fall back to the default text.
@@ -91,7 +117,8 @@ final class AppState {
 
   // MARK: - Conversation management
 
-  func newConversation() {
+  @discardableResult
+  func newConversation() -> Conversation {
     let conv = Conversation(
       modelName: selectedModelName,
       backend: activeBackend
@@ -101,24 +128,29 @@ final class AppState {
     }
     conversations.insert(conv, at: 0)
     selectedConversationId = conv.id
+    scheduleSave()
+    return conv
   }
 
   func deleteConversation(_ conversation: Conversation) {
+    activeSendTasks[conversation.id]?.cancel()
+    activeSendTasks[conversation.id] = nil
     if selectedConversationId == conversation.id {
       selectedConversationId = conversations.first { $0.id != conversation.id }?.id
     }
     discardStoredImages(in: conversation.messages)
     conversations.removeAll { $0.id == conversation.id }
-    persistConversations()
+    scheduleSave()
   }
 
   /// Empties a conversation, keeping its system prompt.
   func clearConversation(_ conversation: Conversation) {
-    if isSending { stopStreaming() }
+    stopStreaming(in: conversation)
     let removed = conversation.messages.filter { $0.role != .system }
     discardStoredImages(in: removed)
     conversation.messages = conversation.messages.filter { $0.role == .system }
-    persistConversations()
+    conversation.title = ""
+    scheduleSave()
   }
 
   /// Generated images are owned by the app, so they have to be cleaned up with the
@@ -135,14 +167,84 @@ final class AppState {
   /// is active, `onDelete` reports indices into the filtered rows, not into
   /// `conversations`, and resolving them against the full list deletes the wrong chats.
   func deleteConversations(at offsets: IndexSet, in visible: [Conversation]) {
-    offsets.filter { $0 < visible.count }
-      .map { visible[$0] }
-      .forEach { deleteConversation($0) }
+    let doomed = offsets.filter { $0 < visible.count }.map { visible[$0] }
+    for conversation in doomed {
+      deleteConversation(conversation)
+    }
   }
 
   func renameConversation(_ conversation: Conversation, title: String) {
     conversation.title = title
-    persistConversations()
+    scheduleSave()
+  }
+
+  // MARK: - Message actions
+
+  func deleteMessage(_ message: Message, in conversation: Conversation) {
+    discardStoredImages(in: [message])
+    conversation.messages.removeAll { $0.id == message.id }
+    scheduleSave()
+  }
+
+  /// Drops the trailing assistant turn and asks the model again from the same point.
+  func regenerate(in conversation: Conversation) {
+    guard !conversation.isSending else { return }
+    // Walk back over the assistant reply (and any error text that followed it).
+    while let last = conversation.messages.last, last.role == .assistant {
+      discardStoredImages(in: [last])
+      conversation.messages.removeLast()
+    }
+    guard conversation.messages.last?.role == .user else { return }
+    beginTurn(in: conversation) { [weak self] in
+      await self?.runTurn(in: conversation)
+    }
+  }
+
+  /// Replaces the text of an earlier user message and re-runs the conversation from
+  /// there, discarding everything that followed it.
+  func editAndResend(_ message: Message, newText: String, in conversation: Conversation) {
+    guard !conversation.isSending,
+      message.role == .user,
+      let index = conversation.messages.firstIndex(where: { $0.id == message.id })
+    else { return }
+
+    let trimmed = newText.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty || !message.attachments.isEmpty else { return }
+
+    let discarded = Array(conversation.messages[(index + 1)...])
+    discardStoredImages(in: discarded)
+    conversation.messages.removeSubrange((index + 1)...)
+    message.content = trimmed
+
+    beginTurn(in: conversation) { [weak self] in
+      await self?.runTurn(in: conversation)
+    }
+  }
+
+  /// Renders a conversation as Markdown for export.
+  func exportMarkdown(_ conversation: Conversation) -> String {
+    var lines = ["# \(conversation.displayTitle)", ""]
+    lines.append("*\(conversation.backend.rawValue) · \(conversation.modelName)*")
+    lines.append("")
+    for message in conversation.messages {
+      switch message.role {
+      case .system:
+        lines.append("> **System:** \(message.content)")
+      case .user:
+        lines.append("## \(String(localized: "export.role.user"))")
+        lines.append(message.contextContent)
+      case .assistant:
+        lines.append("## \(String(localized: "export.role.assistant"))")
+        lines.append(message.content)
+      }
+      if !message.attachments.isEmpty {
+        let names = message.attachments.map(\.name).joined(separator: ", ")
+        lines.append("")
+        lines.append("*\(String(localized: "export.attachments")): \(names)*")
+      }
+      lines.append("")
+    }
+    return lines.joined(separator: "\n")
   }
 
   // MARK: - Gateway model loading
@@ -151,12 +253,9 @@ final class AppState {
     isLoadingGatewayModels = true
     defer { isLoadingGatewayModels = false }
     do {
-      gatewayReachable = await gatewayService.isReachable()
-      guard gatewayReachable else {
-        gatewayModels = []
-        return
-      }
+      // One request: the model list is also the reachability answer.
       let models = try await gatewayService.fetchModels()
+      gatewayReachable = true
       gatewayModels = models
       if selectedGatewayModel == nil
         || !models.contains(where: { $0.id == selectedGatewayModel?.id })
@@ -164,8 +263,12 @@ final class AppState {
         selectedGatewayModel = models.first
       }
     } catch {
-      self.error = error.localizedDescription
+      gatewayReachable = false
       gatewayModels = []
+      // A gateway that was simply never configured is not a failure worth an alert.
+      if !gatewayBaseURL.isEmpty {
+        self.error = error.localizedDescription
+      }
     }
   }
 
@@ -177,79 +280,106 @@ final class AppState {
     defer { isLoadingModels = false }
 
     do {
-      ollamaReachable = await ollamaService.isReachable()
-      guard ollamaReachable else {
-        if reportError { error = String(localized: "error.ollama.not_running") }
-        ollamaModels = []
-        return
-      }
       let models = try await ollamaService.fetchModels()
+      ollamaReachable = true
       ollamaModels = models
       if selectedOllamaModel == nil
         || !models.contains(where: { $0.name == selectedOllamaModel?.name })
       {
         selectedOllamaModel = models.first
       }
+    } catch OllamaError.unreachable {
+      ollamaReachable = false
+      ollamaModels = []
+      if reportError { error = String(localized: "error.ollama.not_running") }
     } catch {
-      self.error = error.localizedDescription
+      ollamaReachable = false
+      if reportError { self.error = error.localizedDescription }
     }
   }
 
   // MARK: - Sending messages
 
-  func sendMessage(_ text: String, attachments: [AttachedFile] = []) async {
-    activeSendTask?.cancel()
-    activeSendTask = Task { [weak self] in
-      await self?.performSendMessage(text, attachments: attachments)
-    }
-  }
-
-  private func performSendMessage(_ text: String, attachments: [AttachedFile] = []) async {
+  func sendMessage(_ text: String, attachments: [AttachedFile] = []) {
     let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmedText.isEmpty || !attachments.isEmpty else { return }
 
-    if selectedConversation == nil { newConversation() }
-    guard let conversation = selectedConversation else { return }
+    let conversation = selectedConversation ?? newConversation()
+    guard !conversation.isSending else { return }
 
-    // Process attachments: extract text/PDF context and base64-encode images.
+    beginTurn(in: conversation) { [weak self] in
+      guard let self else { return }
+      guard self.appendUserMessage(trimmedText, attachments: attachments, to: conversation) else {
+        return
+      }
+      await self.runTurn(in: conversation)
+    }
+  }
+
+  /// Marks a conversation busy, runs `work`, and clears the busy state afterwards —
+  /// including when the task was cancelled, since cancellation lets the body return
+  /// normally rather than unwinding.
+  private func beginTurn(
+    in conversation: Conversation,
+    _ work: @escaping @MainActor () async -> Void
+  ) {
+    let id = conversation.id
+    activeSendTasks[id]?.cancel()
+    conversation.isSending = true
+    activeSendTasks[id] = Task { @MainActor [weak self] in
+      await work()
+      conversation.isSending = false
+      conversation.isGeneratingImage = false
+      if let last = conversation.messages.last, last.isStreaming { last.isStreaming = false }
+      self?.activeSendTasks[id] = nil
+      self?.scheduleSave()
+    }
+  }
+
+  /// Appends the user's turn. Returns false when the attachments could not be read,
+  /// having already written the failure into the transcript.
+  private func appendUserMessage(
+    _ trimmedText: String, attachments: [AttachedFile], to conversation: Conversation
+  ) -> Bool {
     let contextText: String
     let imageDataURIs: [String]
     do {
       (contextText, imageDataURIs) = try AttachmentProcessor.process(attachments)
     } catch {
-      let errMsg = Message(
-        role: .assistant,
-        content: String(format: String(localized: "error.generic"), error.localizedDescription),
-        isError: true
-      )
-      conversation.messages.append(errMsg)
-      persistConversations()
-      return
+      appendError(error.localizedDescription, to: conversation)
+      return false
     }
 
-    // MLX does not support image attachments.
     if activeBackend == .mlx && !imageDataURIs.isEmpty {
-      let errMsg = Message(
-        role: .assistant, content: String(localized: "error.mlx_no_images"), isError: true)
-      conversation.messages.append(errMsg)
-      persistConversations()
-      return
+      appendError(SendError.mlxDoesNotSupportImages.localizedDescription, to: conversation)
+      return false
     }
 
     // Auto-title from first user message.
     if conversation.messages.filter({ $0.role == .user }).isEmpty {
       let titleSource = trimmedText.isEmpty ? (attachments.first?.name ?? "") : trimmedText
       let words = titleSource.split(separator: " ").prefix(6).joined(separator: " ")
-      conversation.title = words.isEmpty ? "New Chat" : String(words)
+      conversation.title = String(words)
     }
 
-    // Append user message — content stores only the typed text for display.
     let messageAttachments = attachments.map {
       MessageAttachment(id: $0.id, name: $0.name, type: $0.type)
     }
-    let userMessage = Message(role: .user, content: trimmedText, attachments: messageAttachments)
-    conversation.messages.append(userMessage)
+    conversation.messages.append(
+      Message(
+        role: .user,
+        content: trimmedText,
+        attachments: messageAttachments,
+        contextText: contextText,
+        imageDataURIs: imageDataURIs
+      ))
     conversation.updatedAt = .now
+    return true
+  }
+
+  /// Runs one model turn against whatever `conversation.messages` currently ends
+  /// with. Used by the initial send, by regenerate, and by edit-and-resend.
+  private func runTurn(in conversation: Conversation) async {
     // Record what actually served this turn. The values captured at creation time
     // are stale whenever the model list had not loaded yet, or the user switched.
     conversation.modelName = selectedModelName
@@ -257,84 +387,52 @@ final class AppState {
 
     let assistantMessage = Message(role: .assistant, content: "", isStreaming: true)
     conversation.messages.append(assistantMessage)
-
-    isSending = true
-    defer {
-      isSending = false
-      isGeneratingImage = false
-      assistantMessage.isStreaming = false
-      persistConversations()
-    }
+    defer { assistantMessage.isStreaming = false }
 
     do {
       // Image models speak a different endpoint and take no conversation history,
       // so they bypass the context-building and streaming path entirely.
       if activeBackend == .gateway, selectedGatewayModel?.isImageGeneration == true {
+        let prompt =
+          conversation.messages
+          .last(where: { $0.role == .user })?.content ?? ""
+        let attachments =
+          conversation.messages
+          .last(where: { $0.role == .user })?.attachments ?? []
         try await generateImage(
-          prompt: trimmedText, attachments: attachments, into: assistantMessage)
+          prompt: prompt, attachmentCount: attachments.count, into: assistantMessage,
+          in: conversation)
         return
       }
 
-      // Build context messages from conversation history.
-      var contextMessages = conversation.messages
-        .filter { message in
-          if message === assistantMessage { return false }  // this turn's placeholder
-          if message.isError { return false }  // never replay our own error text
-          // A cancelled turn can leave an empty assistant message behind; some
-          // providers reject empty content outright.
-          if message.role == .assistant && message.content.isEmpty { return false }
-          return true
-        }
-        .map { ChatMessage(role: $0.role, content: $0.content) }
+      let (service, model) = try resolveBackend()
+      let context = ContextBuilder.build(
+        from: conversation.messages,
+        excluding: assistantMessage,
+        tokenLimit: contextTokenLimit
+      )
 
-      // Inject file context and images into the current (last) user message only.
-      if let lastIndex = contextMessages.indices.last {
-        let base = contextMessages[lastIndex]
-        let fullContent = contextText.isEmpty ? base.content : "\(contextText)\n\n\(base.content)"
-        contextMessages[lastIndex] = ChatMessage(
-          role: base.role,
-          content: fullContent,
-          images: imageDataURIs.isEmpty ? nil : imageDataURIs
-        )
+      let stream = await service.stream(
+        model: model, messages: context, temperature: temperature)
+
+      // Tokens are batched into ~20 updates a second rather than published one at
+      // a time. Each mutation of `content` re-evaluates the bubble and re-runs the
+      // scroll animation, so publishing per token made the cost of drawing a reply
+      // grow with its length.
+      var pending = ""
+      var lastFlush = ContinuousClock.now
+      func flush() {
+        guard !pending.isEmpty else { return }
+        assistantMessage.content += pending
+        pending = ""
+        lastFlush = ContinuousClock.now
       }
+      defer { flush() }
 
-      switch activeBackend {
-      case .ollama:
-        guard let model = selectedOllamaModel else {
-          assistantMessage.content = String(localized: "error.no_ollama_model")
-          assistantMessage.isError = true
-          return
-        }
-        let stream = await ollamaService.chat(model: model.name, messages: contextMessages, temperature: temperature)
-        for try await token in stream {
-          try Task.checkCancellation()
-          assistantMessage.content += token
-        }
-
-      case .mlx:
-        let mlx = MLXService.shared
-        guard mlx.loadedModelId != nil else {
-          assistantMessage.content = String(localized: "error.no_mlx_model")
-          assistantMessage.isError = true
-          return
-        }
-        let stream = mlx.chat(messages: contextMessages, temperature: Float(temperature))
-        for try await token in stream {
-          try Task.checkCancellation()
-          assistantMessage.content += token
-        }
-
-      case .gateway:
-        guard let model = selectedGatewayModel else {
-          assistantMessage.content = String(localized: "error.no_gateway_model")
-          assistantMessage.isError = true
-          return
-        }
-        let stream = await gatewayService.chat(model: model.id, messages: contextMessages, temperature: temperature)
-        for try await token in stream {
-          try Task.checkCancellation()
-          assistantMessage.content += token
-        }
+      for try await token in stream {
+        try Task.checkCancellation()
+        pending += token
+        if ContinuousClock.now - lastFlush >= .milliseconds(50) { flush() }
       }
     } catch is CancellationError {
       // Cancelled by user — keep partial response.
@@ -345,29 +443,41 @@ final class AppState {
     }
   }
 
+  /// Picks the service and model id for the active backend.
+  private func resolveBackend() throws -> (ChatBackend, String) {
+    switch activeBackend {
+    case .ollama:
+      guard let model = selectedOllamaModel else { throw SendError.noModel(.ollama) }
+      return (ollamaService, model.name)
+    case .mlx:
+      let mlx = MLXService.shared
+      guard let loaded = mlx.loadedModelId else { throw SendError.noModel(.mlx) }
+      return (mlx, loaded)
+    case .gateway:
+      guard let model = selectedGatewayModel else { throw SendError.noModel(.gateway) }
+      return (gatewayService, model.id)
+    }
+  }
+
+  private func appendError(_ message: String, to conversation: Conversation) {
+    conversation.messages.append(
+      Message(
+        role: .assistant,
+        content: String(format: String(localized: "error.generic"), message),
+        isError: true))
+  }
+
   /// Runs one image generation and attaches the result to `message`.
   private func generateImage(
-    prompt: String, attachments: [AttachedFile], into message: Message
+    prompt: String, attachmentCount: Int, into message: Message, in conversation: Conversation
   ) async throws {
-    guard let model = selectedGatewayModel else {
-      message.content = String(localized: "error.no_gateway_model")
-      message.isError = true
-      return
-    }
-    guard attachments.isEmpty else {
-      // Editing an existing image is a different endpoint (/v1/images/edits).
-      message.content = String(localized: "error.image_no_attachments")
-      message.isError = true
-      return
-    }
-    guard !prompt.isEmpty else {
-      message.content = String(localized: "error.image_no_prompt")
-      message.isError = true
-      return
-    }
+    guard let model = selectedGatewayModel else { throw SendError.noModel(.gateway) }
+    // Editing an existing image is a different endpoint (/v1/images/edits).
+    guard attachmentCount == 0 else { throw SendError.imageModelTakesNoAttachments }
+    guard !prompt.isEmpty else { throw SendError.imageModelNeedsPrompt }
 
-    isGeneratingImage = true
-    message.isStreaming = true
+    conversation.isGeneratingImage = true
+    defer { conversation.isGeneratingImage = false }
 
     let images = try await gatewayService.generateImage(model: model.id, prompt: prompt)
     try Task.checkCancellation()
@@ -383,21 +493,31 @@ final class AppState {
   }
 
   /// A readable default for the save panel, derived from the prompt.
-  private static func imageFilename(for prompt: String) -> String {
-    let slug =
+  static func imageFilename(for prompt: String) -> String {
+    let filtered =
       prompt
       .lowercased()
       .split(separator: " ").prefix(5)
       .joined(separator: "-")
       .filter { $0.isLetter || $0.isNumber || $0 == "-" }
+
+    // Collapse and trim the separators left behind by stripped punctuation.
+    // Checking `isEmpty` on the filtered string alone was not enough: a prompt of
+    // pure punctuation reduces to "-", which is not empty and produced "-.png".
+    let slug =
+      filtered
+      .split(separator: "-", omittingEmptySubsequences: true)
+      .joined(separator: "-")
+
     return (slug.isEmpty ? "image" : slug) + ".png"
   }
 
-  func stopStreaming() {
-    activeSendTask?.cancel()
-    activeSendTask = nil
-    isSending = false
-    if let msg = selectedConversation?.messages.last, msg.isStreaming {
+  func stopStreaming(in conversation: Conversation) {
+    activeSendTasks[conversation.id]?.cancel()
+    activeSendTasks[conversation.id] = nil
+    conversation.isSending = false
+    conversation.isGeneratingImage = false
+    if let msg = conversation.messages.last, msg.isStreaming {
       msg.isStreaming = false
     }
   }
@@ -409,45 +529,91 @@ final class AppState {
     defaults.set(ollamaBaseURL, forKey: DefaultsKey.ollamaBaseURL)
     defaults.set(temperature, forKey: DefaultsKey.temperature)
     defaults.set(systemPrompt, forKey: DefaultsKey.systemPrompt)
+    defaults.set(contextTokenLimit, forKey: DefaultsKey.contextTokenLimit)
 
     await ollamaService.updateBaseURL(ollamaBaseURL)
+    await ollamaService.updateContextTokenLimit(contextTokenLimit)
     await refreshOllamaModels(reportError: true)
   }
 
   func applyGatewaySettings(baseURL: String, apiKey: String) async {
     gatewayBaseURL = baseURL
     UserDefaults.standard.set(baseURL, forKey: DefaultsKey.gatewayBaseURL)
-    KeychainHelper.save(apiKey, forKey: DefaultsKey.gatewayAPIKey)
+    if !KeychainHelper.save(apiKey, forKey: DefaultsKey.gatewayAPIKey) {
+      error = String(localized: "error.keychain_write_failed")
+    }
     await gatewayService.update(baseURL: baseURL, apiKey: apiKey)
     await refreshGatewayModels()
   }
 
   // MARK: - Persistence
 
-  private var storageURL: URL {
+  private var saveTask: Task<Void, Never>?
+  /// Persistence failures are reported once per session; a full disk would
+  /// otherwise raise an alert after every streamed token batch.
+  private var hasReportedSaveFailure = false
+
+  /// Coalesces the burst of saves a single turn produces into one write, performed
+  /// off the main actor.
+  func scheduleSave() {
+    saveTask?.cancel()
+    saveTask = Task { @MainActor [weak self] in
+      try? await Task.sleep(for: .milliseconds(500))
+      guard !Task.isCancelled else { return }
+      await self?.saveNow()
+    }
+  }
+
+  /// Writes immediately. Called on quit, where there is no time to wait out the
+  /// coalescing window.
+  func saveNow() async {
+    saveTask?.cancel()
+    saveTask = nil
+    let dtos = conversations.map(ConversationDTO.init)
+    do {
+      let data = try JSONEncoder().encode(dtos)
+      try await ConversationStore.shared.write(data)
+      hasReportedSaveFailure = false
+    } catch {
+      guard !hasReportedSaveFailure else { return }
+      hasReportedSaveFailure = true
+      self.error = String(
+        format: String(localized: "error.persist_failed"), error.localizedDescription)
+    }
+  }
+
+  private func loadPersistedConversations() {
+    guard let data = ConversationStore.shared.readSynchronously(),
+      let dtos = try? JSONDecoder().decode([ConversationDTO].self, from: data)
+    else { return }
+    conversations = dtos.map { $0.toConversation() }
+    selectedConversationId = conversations.first?.id
+  }
+}
+
+/// Serialises conversation writes off the main actor.
+///
+/// Encoding still happens on the main actor (the model objects are not `Sendable`),
+/// but the file write — which was blocking the UI on every turn — does not.
+actor ConversationStore {
+  static let shared = ConversationStore()
+
+  nonisolated var url: URL {
     FileManager.default
       .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("Chat42/conversations.json")
   }
 
-  func persistConversations() {
-    do {
-      let dtos = conversations.map(ConversationDTO.init)
-      let data = try JSONEncoder().encode(dtos)
-      let dir = storageURL.deletingLastPathComponent()
-      try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-      try data.write(to: storageURL)
-    } catch {
-      print("Persist error: \(error)")
-    }
+  func write(_ data: Data) throws {
+    let directory = url.deletingLastPathComponent()
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    // Atomic, so a crash or a full disk mid-write cannot leave a truncated file
+    // that fails to decode on the next launch — which would read as "all my
+    // conversations are gone".
+    try data.write(to: url, options: .atomic)
   }
 
-  private func loadPersistedConversations() {
-    guard FileManager.default.fileExists(atPath: storageURL.path),
-      let data = try? Data(contentsOf: storageURL),
-      let dtos = try? JSONDecoder().decode([ConversationDTO].self, from: data)
-    else { return }
-    conversations = dtos.map { $0.toConversation() }
-    selectedConversationId = conversations.first?.id
+  nonisolated func readSynchronously() -> Data? {
+    try? Data(contentsOf: url)
   }
 }

@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    # Apple Silicon runner: MLX only builds its inference path under arch(arm64),
+    # so an Intel runner would compile a different app than the one that ships.
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Cache SwiftPM dependencies
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Build
+        run: swift build -c debug
+
+      - name: Test
+        run: swift test
+
+  lint:
+    name: Format and localization checks
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Swift formatting
+        run: |
+          swift format lint --recursive --strict Chat42/Sources Tests \
+            || { echo "::error::Run 'swift format --in-place --recursive Chat42/Sources Tests'"; exit 1; }
+
+      - name: Check en/nl key parity
+        # The two .strings files are kept with identical key sets; a key added to
+        # one and not the other ships an untranslated string to Dutch users.
+        run: ./scripts/check-localization.sh
+
+  package:
+    name: Assemble app bundle
+    runs-on: macos-14
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      # Signs ad-hoc when no Developer ID is present, which is what CI wants:
+      # it proves the bundle assembles. package.sh refuses to notarize an ad-hoc
+      # bundle rather than producing a DMG that Gatekeeper would reject.
+      - name: Build app bundle
+        run: ./build.sh
+
+      - name: Verify bundle layout
+        run: |
+          test -x build/Chat42.app/Contents/MacOS/Chat42
+          test -f build/Chat42.app/Contents/Info.plist
+          test -f build/Chat42.app/Contents/Resources/PrivacyInfo.xcprivacy
+          test -f build/Chat42.app/Contents/Resources/en.lproj/Localizable.strings
+          test -f build/Chat42.app/Contents/Resources/nl.lproj/Localizable.strings
+          codesign --verify --deep --strict --verbose=2 build/Chat42.app

@@ -25,6 +25,7 @@ targets:
         includes:
           - "Info.plist"
           - "Assets.xcassets"
+          - "PrivacyInfo.xcprivacy"
           - "en.lproj/Localizable.strings"
           - "nl.lproj/Localizable.strings"
     info:
@@ -48,10 +49,42 @@ targets:
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "14.0"
         CODE_SIGN_STYLE: Automatic
+        # Must stay in step with Package.swift's swiftSettings, or `swift build`
+        # and Xcode disagree about what compiles.
         SWIFT_STRICT_CONCURRENCY: complete
+        ENABLE_HARDENED_RUNTIME: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:
       - package: mlx-swift-examples
         product: MLXLLM
       - package: mlx-swift-examples
         product: MLXLMCommon
+
+  Chat42Tests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests/Chat42Tests
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        SWIFT_STRICT_CONCURRENCY: complete
+        GENERATE_INFOPLIST_FILE: true
+    dependencies:
+      - target: Chat42
+
+schemes:
+  Chat42:
+    build:
+      targets:
+        Chat42: all
+        Chat42Tests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - Chat42Tests
+    archive:
+      config: Release

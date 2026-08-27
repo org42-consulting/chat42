@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct ChatInputView: View {
   @Environment(AppState.self) private var state
   @Environment(MLXService.self) private var mlxService
+  let conversation: Conversation
   @Binding var inputText: String
   var onSend: () -> Void
 
@@ -17,7 +18,7 @@ struct ChatInputView: View {
   var canSend: Bool {
     (!inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
       || !pendingAttachments.isEmpty)
-      && !state.isSending
+      && !conversation.isSending
   }
 
   var body: some View {
@@ -59,7 +60,7 @@ struct ChatInputView: View {
         .padding(2)
     )
     .onDrop(of: [UTType.fileURL], isTargeted: $isDragOver) { providers in
-      providers.forEach { provider in
+      for provider in providers {
         _ = provider.loadObject(ofClass: URL.self) { url, _ in
           guard let url, url.isFileURL else { return }
           DispatchQueue.main.async { addAttachment(from: url) }
@@ -112,37 +113,45 @@ struct ChatInputView: View {
     }
     .buttonStyle(.plain)
     .help(String(localized: "input.attach.help"))
+    .accessibilityLabel(Text("input.attach.help"))
   }
 
   // MARK: - Send button
 
   private var sendButton: some View {
     Button {
-      if state.isSending { state.stopStreaming() } else { onSend() }
+      if conversation.isSending {
+        state.stopStreaming(in: conversation)
+      } else {
+        onSend()
+      }
     } label: {
       ZStack {
         Circle()
           .fill(
-            state.isSending
+            conversation.isSending
               ? Color.red.opacity(0.85)
               : (canSend ? Color.accentColor : Color.primary.opacity(0.12))
           )
           .frame(width: 36, height: 36)
-        Image(systemName: state.isSending ? "stop.fill" : "arrow.up")
+        Image(systemName: conversation.isSending ? "stop.fill" : "arrow.up")
           .font(.callout)
           .fontWeight(.semibold)
-          .foregroundStyle(state.isSending || canSend ? .white : Color.secondary)
+          .foregroundStyle(conversation.isSending || canSend ? .white : Color.secondary)
       }
     }
     .buttonStyle(.plain)
     .keyboardShortcut(.return, modifiers: [])
-    .disabled(!canSend && !state.isSending)
+    .disabled(!canSend && !conversation.isSending)
     .help(
-      state.isSending
+      conversation.isSending
         ? String(localized: "input.stop.help")
         : String(localized: "input.send.help")
     )
-    .animation(.easeInOut(duration: 0.15), value: state.isSending)
+    .accessibilityLabel(
+      Text(conversation.isSending ? "input.stop.help" : "input.send.help")
+    )
+    .animation(.easeInOut(duration: 0.15), value: conversation.isSending)
     .animation(.easeInOut(duration: 0.15), value: canSend)
   }
 
@@ -155,7 +164,9 @@ struct ChatInputView: View {
     panel.begin { response in
       guard response == .OK else { return }
       DispatchQueue.main.async {
-        panel.urls.forEach { addAttachment(from: $0) }
+        for url in panel.urls {
+          addAttachment(from: url)
+        }
       }
     }
   }

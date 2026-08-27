@@ -1,5 +1,4 @@
 /* App name */
-"Chat42." = "Chat42.";
 
 /* Sidebar */
 "sidebar.title" = "Chat42.";
@@ -128,7 +127,6 @@
 "error.mlx.not_supported" = "MLX requires Apple Silicon (M1+). Direct inference unavailable.";
 "error.mlx.not_loaded" = "No MLX model is loaded. Select one in Settings → MLX.";
 "error.mlx.load_failed" = "Failed to load model: %@";
-"error.mlx.not_wired" = "Full MLX inference pipeline not yet wired. Use Ollama for inference.";
 "mlx.status.preparing" = "Preparing model…";
 "mlx.status.ready" = "Ready";
 
@@ -139,15 +137,10 @@
 "error.ollama.decoding" = "Decoding error: %@";
 
 /* MLX model descriptions */
-"mlx.model.llama_1b.name" = "Llama 3.2 1B (4-bit)";
 "mlx.model.llama_1b.desc" = "Fast 1B parameter model, great for quick responses";
-"mlx.model.llama_3b.name" = "Llama 3.2 3B (4-bit)";
 "mlx.model.llama_3b.desc" = "Balanced 3B model with good quality";
-"mlx.model.mistral_7b.name" = "Mistral 7B (4-bit)";
 "mlx.model.mistral_7b.desc" = "High quality 7B instruction model";
-"mlx.model.phi35.name" = "Phi 3.5 Mini (4-bit)";
 "mlx.model.phi35.desc" = "Microsoft's efficient small language model";
-"mlx.model.gemma_2b.name" = "Gemma 2 2B (4-bit)";
 "mlx.model.gemma_2b.desc" = "Google's compact instruction-tuned model";
 
 /* Defaults */
@@ -196,3 +189,48 @@
 "error.image_no_attachments" = "Image models cannot take attachments. Remove the file and describe the image instead.";
 "error.image_no_prompt" = "Describe the image you want to generate.";
 "error.no_gateway_model" = "No gateway model selected.";
+
+
+/* Added: attachment handling */
+"error.attachment.pdf_failed" = "Could not extract text from %@";
+"error.attachment.unreadable" = "Could not read %@";
+"error.attachment.unsupported" = "Unsupported file type: %@";
+"error.attachment.too_large" = "%1$@ is larger than the %2$@ limit.";
+"attachment.truncated" = "[…truncated: the rest of this file was not sent.]";
+/* Added: MLX */
+"error.mlx.not_downloaded" = "Model not downloaded. Download it first in Settings → MLX.";
+"error.mlx.no_files" = "No model files found in repository.";
+"error.mlx.unsafe_path" = "Refused an unsafe file path from the repository: %@";
+"mlx.status.loading" = "Loading… %lld%%";
+"settings.mlx.cancel_help" = "Cancel download";
+/* Added: persistence and keychain */
+"error.persist_failed" = "Could not save conversations: %@";
+"error.keychain_write_failed" = "Could not save the API key to the keychain.";
+/* Added: message actions */
+"message.copy" = "Copy";
+"message.edit" = "Edit";
+"message.edit.cancel" = "Cancel";
+"message.edit.resend" = "Resend";
+"message.regenerate" = "Regenerate";
+"message.delete" = "Delete";
+"message.system.a11y" = "System message: %@";
+"message.waiting.a11y" = "Waiting for a reply";
+/* Added: chat actions */
+"chat.export.help" = "Export conversation as Markdown";
+"chat.clear.confirm.title" = "Clear this conversation?";
+"chat.clear.confirm.message" = "Every message in this chat is deleted. This cannot be undone.";
+"chat.clear.confirm.action" = "Clear";
+"alert.cancel" = "Cancel";
+"sidebar.search.clear" = "Clear search";
+"export.role.user" = "You";
+"export.role.assistant" = "Assistant";
+"export.attachments" = "Attachments";
+/* Added: context budget */
+"settings.general.context.label" = "Context size";
+"settings.general.context.hint" = "How much history to send. Older turns are dropped past this; also sets Ollama's num_ctx.";
+"mlx.model.llama31_8b.desc" = "8B parameter model with excellent quality";
+"mlx.model.llama31_70b.desc" = "Large 70B parameter model with high quality";
+"mlx.model.qwen2_7b.desc" = "Alibaba's high-quality instruction model";
+"mlx.model.llama3_8b.desc" = "Meta's 8B instruction model";
+"mlx.model.llama3_70b.desc" = "Meta's 70B instruction model";
+"mlx.model.phi3_medium.desc" = "Microsoft's medium-sized language model";

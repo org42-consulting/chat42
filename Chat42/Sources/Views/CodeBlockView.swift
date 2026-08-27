@@ -18,7 +18,9 @@ struct CodeBlockView: View {
 
         Spacer()
 
-        Button { copy() } label: {
+        Button {
+          copy()
+        } label: {
           Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
             .foregroundStyle(isCopied ? Color.green : Color.secondary)
         }

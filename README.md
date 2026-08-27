@@ -13,33 +13,35 @@ If you have a recent Mac with Apple Silicon (like an M3, M4 or M5 chip), you alr
 
 ## Features
 Chat42 is a user friendly frontend for AI models that run on your machine or somewhere else (like in the cloud).
-- Native MacOS app, providing a smooth and polished user experience
+- Native macOS app, providing a smooth and polished user experience
 - Supports multiple AI models, allowing to seamlessly switch between models
 - Support for English and Dutch languages
 - Single interface for connecting to multiple AI models
 - Conversation history persistence
-- System prompt configuration
-- Temperature control for response randomness
+- Attach text files, PDFs, and images to a question
+- Regenerate a reply, edit and resend an earlier message, delete single messages
+- Export a conversation as Markdown
+- System prompt, temperature, and context size configuration
 - Dark/light mode support
 
 ## Quick Start Guide
 Want to get started without having to face technical installations? Just follow these steps:
 - Download Chat42.
-- Open the downloaded DMG file and drag the Chat42. app to your Applications folder
-- Doubleclick on the Chat42. icon to open the app
+- Open the downloaded DMG file and drag the Chat42 app to your Applications folder
+- Double-click the Chat42 icon to open the app
 - Click "Settings"
 - Select "MLX"
 - Download any of the listed models
-- When download, click "Load", followed by "Done".
-- Start a new converation by clicking the button "New chat"
+- When the download finishes, click "Load", followed by "Done"
+- Start a new conversation by clicking the button "New chat"
 - Make sure "MLX" is selected in the top bar
-- Enter a promppt, such as "Write a haiku about AI"  
+- Enter a prompt, such as "Write a haiku about AI"
 
 <img width="912" height="764" alt="Image" src="https://github.com/user-attachments/assets/f0a16e28-4425-4f42-8c9d-c26e93fb94ce" />
 
 
 ## Supported AI Backends
-Chat42. is both user friendly and powerful, and support 3 different kinds of backend, spanning local and cloud models. How cool is that?  
+Chat42 is both user friendly and powerful, and supports 3 different kinds of backend, spanning local and cloud models. How cool is that?
 <img width="912" height="764" alt="Image" src="https://github.com/user-attachments/assets/d249f48b-eca1-4053-b075-4753ecf90a9d" />
 
 ### 1. Ollama
@@ -61,11 +63,14 @@ Gateway supports OpenAI-compatible APIs, allowing you to connect to services lik
 
 ### Configuration
 
-Access settings through the gear icon in the sidebar or via the Settings menu.
+Access settings through the gear icon in the sidebar or with ⌘, — both open the same window.
 
 #### General Settings
 - **System Prompt**: Configure a system prompt that will be used for all conversations
 - **Temperature**: Adjust the randomness of responses (0.0 to 2.0)
+- **Context Size**: How much conversation history to send. Older turns are dropped
+  once the estimate passes this, so a long chat keeps working instead of failing.
+  This also sets Ollama's `num_ctx` — raise it to use a model's full window.
 
 #### Ollama Settings
 - **Base URL**: Set the URL for your Ollama instance (default: `http://localhost:11434`)
@@ -74,12 +79,14 @@ Access settings through the gear icon in the sidebar or via the Settings menu.
 
 #### Gateway Settings
 - **Base URL**: Set the URL for your Gateway service (e.g., `https://api.openai.com`)
-- **API Key**: Enter your API key for authentication
+- **API Key**: Enter your API key for authentication. It is stored in the macOS
+  Keychain, never in preferences.
 - **Test Connection**: Verify that the Gateway service is reachable
 
 #### MLX Settings
 - **Model Selection**: Choose from bundled models (Llama 3.2, Mistral, Phi, Gemma, Qwen, etc.)
-- **Download**: Download models directly from Hugging Face
+- **Download**: Download models directly from Hugging Face. A download in progress
+  can be cancelled.
 - **Load**: Load a downloaded model for use in conversations
 - **Unload**: Unload the currently loaded model
 
@@ -114,12 +121,69 @@ Access settings through the gear icon in the sidebar or via the Settings menu.
 4. View conversation history in the sidebar
 5. Adjust settings as needed through the Settings menu
 
+### Attachments
+
+Drag a file onto the composer, or use the paperclip. Text files and PDFs are
+extracted and stay with the conversation, so follow-up questions about a document
+still work. Images are sent to vision-capable models on Ollama and Gateway; MLX
+does not accept them.
+
+Limits: 10 MB per image, 25 MB per document. Very long extracted text is truncated
+with a note rather than silently sent in full.
+
+### Message actions
+
+Right-click any message:
+
+| Action | |
+|---|---|
+| Copy | Copies the message text |
+| Edit | User messages only — rewrites it and re-runs the conversation from that point |
+| Regenerate | Newest reply only (⌘R) — asks again from the same question |
+| Delete | Removes a single message |
+
+## Building from source
+
+Only the Xcode Command Line Tools are required; Xcode itself is optional.
+
+```sh
+swift build -c release          # compile
+swift test                      # run the test suite
+./build.sh                      # assemble build/Chat42.app
+./package.sh                    # create and notarize Chat42.dmg
+```
+
+`build.sh` signs with a "Developer ID Application" identity if one is in your
+keychain, and ad-hoc otherwise. An ad-hoc bundle runs on your own machine but
+cannot be notarized, and Gatekeeper will refuse it elsewhere.
+
+To notarize, set either `NOTARY_PROFILE` (from `xcrun notarytool store-credentials`)
+or `NOTARY_APPLE_ID` + `NOTARY_TEAM_ID` + `NOTARY_PASSWORD` before running
+`package.sh`.
+
+Before opening a pull request:
+
+```sh
+swift format lint --recursive --strict Chat42/Sources Tests
+./scripts/check-localization.sh
+```
+
+There are two build definitions and they must stay in step: `Package.swift` (used
+by `build.sh`) and `project.yml` (used by XcodeGen for the Xcode project). Compiler
+settings are duplicated in both on purpose — change one, change the other.
+
 ## Troubleshooting
+
+### "Chat42 cannot be opened because Apple cannot check it for malicious software"
+The build you downloaded was not notarized. Get a release DMG, or build from source
+and run it locally.
 
 ### Ollama Issues
 - Make sure Ollama is running: `ollama serve`
 - Verify the Ollama URL in Settings → Ollama
 - Check that models are pulled in Ollama
+- If long conversations lose their early turns, raise **Context Size** in
+  Settings → General
 
 ### MLX Issues
 - Ensure you're running on Apple Silicon (M1/M2/M3) Mac
@@ -130,10 +194,13 @@ Access settings through the gear icon in the sidebar or via the Settings menu.
 - Verify the Gateway URL and API key in Settings → Gateway
 - Check that the service is accessible from your network
 - Ensure the API key has proper permissions
+- Some reasoning-tier models reject an explicit temperature; Chat42 retries without
+  it automatically
 
 ## Privacy Policy
 
-Chat42. does not collect or transmit any personal data. All conversations and model usage occur locally on your device. When connecting to external services (like Ollama or API endpoints), data is transmitted according to the privacy policies of those services.
+Chat42 does not collect or transmit any personal data. All conversations and model usage occur locally on your device. When connecting to external services (like Ollama or API endpoints), data is transmitted according to the privacy policies of those services.
 
-
-
+Conversations are stored in `~/Library/Application Support/Chat42/`. The Gateway API
+key is stored in the macOS Keychain. The bytes of files you attach are never written
+to disk; extracted text is kept with the conversation so follow-up questions work.

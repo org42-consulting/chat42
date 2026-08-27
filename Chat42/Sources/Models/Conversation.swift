@@ -10,9 +10,16 @@ final class Conversation: Identifiable, Hashable {
   let createdAt: Date
   var updatedAt: Date
 
+  /// Streaming state lives on the conversation, not on `AppState`, so a reply
+  /// arriving in one chat does not disable the composer in every other chat.
+  var isSending: Bool = false
+  /// Image generation is a single slow request rather than a token stream, so the
+  /// toolbar needs to say something different while it runs.
+  var isGeneratingImage: Bool = false
+
   init(
     id: UUID = UUID(),
-    title: String = "New Chat",
+    title: String = "",
     messages: [Message] = [],
     modelName: String = "",
     backend: AIBackend = .ollama,
@@ -31,7 +38,7 @@ final class Conversation: Identifiable, Hashable {
   var lastMessage: Message? { messages.last }
 
   var displayTitle: String {
-    title.isEmpty ? "New Chat" : title
+    title.isEmpty ? String(localized: "default.new_chat") : title
   }
 
   static func == (lhs: Conversation, rhs: Conversation) -> Bool { lhs.id == rhs.id }

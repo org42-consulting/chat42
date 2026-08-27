@@ -2,8 +2,16 @@ import AppKit
 import SwiftUI
 
 struct MessageBubbleView: View {
+  @Environment(AppState.self) private var state
   let message: Message
+  let conversation: Conversation
+  /// Only the newest assistant turn can be regenerated — re-running an earlier one
+  /// would have to discard everything after it, which is what editing is for.
+  let canRegenerate: Bool
+
   @State private var isCopied = false
+  @State private var isEditing = false
+  @State private var draft = ""
 
   var isUser: Bool { message.role == .user }
   var isSystem: Bool { message.role == .system }
@@ -32,6 +40,9 @@ struct MessageBubbleView: View {
     .padding(.vertical, 6)
     .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
     .frame(maxWidth: .infinity)
+    .accessibilityElement(children: .combine)
+    .accessibilityLabel(
+      Text(String(format: String(localized: "message.system.a11y"), message.content)))
   }
 
   // MARK: - Chat bubble row
@@ -49,6 +60,30 @@ struct MessageBubbleView: View {
       }
     }
     .padding(.horizontal, 16)
+    .contextMenu { messageContextMenu }
+  }
+
+  @ViewBuilder
+  private var messageContextMenu: some View {
+    if !message.content.isEmpty {
+      Button(String(localized: "message.copy")) { copyContent() }
+    }
+    if isUser && !conversation.isSending {
+      Button(String(localized: "message.edit")) {
+        draft = message.content
+        isEditing = true
+      }
+    }
+    if !isUser && canRegenerate && !conversation.isSending {
+      Button(String(localized: "message.regenerate")) {
+        state.regenerate(in: conversation)
+      }
+    }
+    Divider()
+    Button(String(localized: "message.delete"), role: .destructive) {
+      state.deleteMessage(message, in: conversation)
+    }
+    .disabled(conversation.isSending)
   }
 
   private var userAvatar: some View {
@@ -56,11 +91,12 @@ struct MessageBubbleView: View {
       .fill(Color.accentColor)
       .frame(width: 28, height: 28)
       .overlay(
-        Text("U")
+        Text(verbatim: "U")
           .font(.caption)
           .fontWeight(.semibold)
           .foregroundStyle(.white)
       )
+      .accessibilityHidden(true)
   }
 
   private var assistantAvatar: some View {
@@ -72,6 +108,7 @@ struct MessageBubbleView: View {
           .font(.caption2)
           .foregroundStyle(Color.accentColor)
       )
+      .accessibilityHidden(true)
   }
 
   /// Images the app generated and owns bytes for — rendered inline.
@@ -94,8 +131,10 @@ struct MessageBubbleView: View {
         attachmentChips
       }
 
-      // A generated-image message carries no text, so it gets no empty bubble.
-      if !message.content.isEmpty || message.isStreaming {
+      if isEditing {
+        editor
+      } else if !message.content.isEmpty || message.isStreaming {
+        // A generated-image message carries no text, so it gets no empty bubble.
         ZStack(alignment: isUser ? .bottomTrailing : .bottomLeading) {
           bubbleText
             .padding(.horizontal, 14)
@@ -116,21 +155,68 @@ struct MessageBubbleView: View {
         }
       }
 
-      HStack(spacing: 8) {
-        Text(message.timestamp.formatted(date: .omitted, time: .shortened))
-          .font(.caption2)
-          .foregroundStyle(.tertiary)
+      footer
+    }
+  }
 
-        if !isUser && !message.content.isEmpty {
+  // MARK: - Inline editor
+
+  private var editor: some View {
+    VStack(alignment: .trailing, spacing: 6) {
+      TextEditor(text: $draft)
+        .font(.body)
+        .frame(minWidth: 260, minHeight: 60)
+        .scrollContentBackground(.hidden)
+        .padding(8)
+        .background(Color.assistantBubble, in: bubbleShape)
+        .overlay(bubbleShape.strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1))
+
+      HStack(spacing: 8) {
+        Button(String(localized: "message.edit.cancel")) { isEditing = false }
+          .buttonStyle(.bordered)
+          .controlSize(.small)
+        Button(String(localized: "message.edit.resend")) {
+          isEditing = false
+          state.editAndResend(message, newText: draft, in: conversation)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.small)
+        .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+      }
+    }
+  }
+
+  // MARK: - Footer
+
+  private var footer: some View {
+    HStack(spacing: 8) {
+      Text(message.timestamp.formatted(date: .omitted, time: .shortened))
+        .font(.caption2)
+        .foregroundStyle(.tertiary)
+
+      if !isUser && !message.content.isEmpty {
+        Button {
+          copyContent()
+        } label: {
+          Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+            .font(.caption2)
+            .foregroundStyle(isCopied ? Color.green : Color.secondary.opacity(0.6))
+        }
+        .buttonStyle(.plain)
+        .help(String(localized: "message.copy.help"))
+        .accessibilityLabel(Text("message.copy.help"))
+
+        if canRegenerate && !conversation.isSending {
           Button {
-            copyContent()
+            state.regenerate(in: conversation)
           } label: {
-            Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
+            Image(systemName: "arrow.clockwise")
               .font(.caption2)
-              .foregroundStyle(isCopied ? Color.green : Color.secondary.opacity(0.6))
+              .foregroundStyle(Color.secondary.opacity(0.6))
           }
           .buttonStyle(.plain)
-          .help(String(localized: "message.copy.help"))
+          .help(String(localized: "message.regenerate"))
+          .accessibilityLabel(Text("message.regenerate"))
         }
       }
     }
@@ -166,21 +252,22 @@ struct MessageBubbleView: View {
               )
           }
         }
+        .accessibilityLabel(Text("message.waiting.a11y"))
       } else if isUser {
         // Your own input is shown verbatim — no code-block affordances on it.
-        SelectableText(message.content)
+        Text(message.content)
           .textSelection(.enabled)
           .font(.body)
           .foregroundStyle(.white)
           .fixedSize(horizontal: false, vertical: true)
       } else {
         // Replies are split into prose and fenced code blocks. With no fences this
-        // is a single text segment, rendering exactly as it did before.
+        // is a single text segment.
         VStack(alignment: .leading, spacing: 8) {
-          ForEach(MessageSegment.parse(message.content)) { segment in
+          ForEach(message.segments) { segment in
             switch segment.kind {
             case .text(let body):
-              SelectableText(body)
+              Text(body)
                 .textSelection(.enabled)
                 .font(.body)
                 .foregroundStyle(.primary)
@@ -200,7 +287,7 @@ struct MessageBubbleView: View {
 
   private var typingIndicator: some View {
     HStack(spacing: 3) {
-      ForEach(0..<3, id: \.self) { i in
+      ForEach(0..<3, id: \.self) { _ in
         Circle()
           .fill(Color.accentColor.opacity(0.7))
           .frame(width: 4, height: 4)
@@ -209,6 +296,7 @@ struct MessageBubbleView: View {
     .padding(.horizontal, 6)
     .padding(.vertical, 4)
     .background(Color.primary.opacity(0.08), in: Capsule())
+    .accessibilityHidden(true)
   }
 
   private func copyContent() {
@@ -216,26 +304,9 @@ struct MessageBubbleView: View {
     NSPasteboard.general.setString(message.content, forType: .string)
     isCopied = true
     Task {
-      try? await Task.sleep(nanoseconds: 1_500_000_000)
+      try? await Task.sleep(for: .milliseconds(1500))
       isCopied = false
     }
-  }
-}
-
-// MARK: - SelectableText (renders markdown-lite)
-
-struct SelectableText: View {
-  let text: String
-  init(_ text: String) { self.text = text }
-
-  var body: some View {
-    text.components(separatedBy: "\n")
-      .enumerated()
-      .reduce(Text("")) { result, pair in
-        let (i, line) = pair
-        let lineText = (try? Text(AttributedString(markdown: line))) ?? Text(line)
-        return i == 0 ? lineText : result + Text("\n") + lineText
-      }
   }
 }
 

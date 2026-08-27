@@ -200,9 +200,49 @@ struct GatewayImageResponse: Decodable {
   let data: [Item]
 }
 
+// MARK: - Failure mapping
+
+/// Turns a non-2xx gateway response into the most actionable error available.
+///
+/// Free-standing rather than a method on the actor so the classification — which is
+/// pure string handling over bodies that differ per provider — can be exercised
+/// directly.
+enum GatewayFailureMapper {
+  static func error(status: Int, body: Data, model: String? = nil) -> GatewayError {
+    if status == 401 || status == 403 { return .authenticationFailed }
+
+    let api = (try? JSONDecoder().decode(GatewayErrorEnvelope.self, from: body))?.error
+    let raw = String(data: body, encoding: .utf8)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let apiMessage = (api?.message).flatMap { $0.isEmpty ? nil : $0 }
+    // Fall back to the raw body only when it is not a recognisable error envelope.
+    // Otherwise a message-less envelope would be shown to the user as raw JSON.
+    let detail = apiMessage ?? (api == nil ? (raw?.isEmpty == true ? nil : raw) : nil)
+
+    if status == 400, rejectsTemperature(api: api, message: detail) {
+      return .unsupportedParameter("temperature")
+    }
+    if let detail, !detail.isEmpty { return .apiError(detail) }
+    // A message-less 404 means the gateway lists the model but does not route it —
+    // what every imagen-*/gemini-*-image model on this proxy returns.
+    if status == 404 { return .modelNotAvailable(model ?? "") }
+    return .invalidResponse(status)
+  }
+
+  /// True when a 400 is complaining specifically about `temperature`. Providers word
+  /// this at least three ways ("Unsupported value:", "Unsupported parameter:",
+  /// "`temperature` is deprecated"), so fall back to the text when `param` is absent.
+  static func rejectsTemperature(api: GatewayAPIError?, message: String?) -> Bool {
+    if api?.param == "temperature" { return true }
+    guard let lower = message?.lowercased(), lower.contains("temperature") else { return false }
+    return lower.contains("unsupported") || lower.contains("not supported")
+      || lower.contains("does not support") || lower.contains("deprecated")
+  }
+}
+
 // MARK: - Service
 
-actor GatewayService {
+actor GatewayService: ChatBackend {
   var baseURL: String
   var apiKey: String
 
@@ -216,20 +256,10 @@ actor GatewayService {
     self.apiKey = apiKey
   }
 
-  // MARK: - Health / reachability
-
-  func isReachable() async -> Bool {
-    guard let url = URL(string: "\(baseURL)/v1/models") else { return false }
-    var req = URLRequest(url: url, timeoutInterval: 4)
-    applyHeaders(to: &req)
-    do {
-      let (_, response) = try await URLSession.shared.data(for: req)
-      let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-      return (200..<300).contains(status)
-    } catch { return false }
-  }
-
   // MARK: - List models
+  //
+  // Doubles as the reachability check. Probing `/v1/models` and then immediately
+  // fetching `/v1/models` made every refresh two identical round-trips.
 
   func fetchModels() async throws -> [GatewayModelInfo] {
     guard !baseURL.isEmpty, let url = URL(string: "\(baseURL)/v1/models") else {
@@ -260,13 +290,13 @@ actor GatewayService {
 
   // MARK: - Streaming chat (SSE)
 
-  func chat(
+  func stream(
     model: String,
     messages: [ChatMessage],
     temperature: Double = 0.7
   ) -> AsyncThrowingStream<String, Error> {
     AsyncThrowingStream { continuation in
-      Task {
+      let task = Task {
         do {
           do {
             try await self.streamCompletion(
@@ -285,6 +315,9 @@ actor GatewayService {
           continuation.finish(throwing: error)
         }
       }
+      // Stopping a reply has to tear down the HTTP request too, not just stop
+      // reading it — otherwise the gateway keeps generating (and billing).
+      continuation.onTermination = { _ in task.cancel() }
     }
   }
 
@@ -321,7 +354,9 @@ actor GatewayService {
       throw GatewayError.apiError("Encoding failed")
     }
 
-    var req = URLRequest(url: url)
+    // Reasoning models can think for minutes before the first token arrives; the
+    // default 60s would cancel valid work.
+    var req = URLRequest(url: url, timeoutInterval: 600)
     req.httpMethod = "POST"
     req.httpBody = bodyData
     applyHeaders(to: &req)
@@ -335,6 +370,7 @@ actor GatewayService {
 
     // Parse SSE lines: "data: {...}" or "data: [DONE]"
     for try await line in bytes.lines {
+      try Task.checkCancellation()
       guard line.hasPrefix("data: ") else { continue }
       let payload = String(line.dropFirst(6))
       if payload == "[DONE]" { return }
@@ -417,34 +453,7 @@ actor GatewayService {
 
   /// Same mapping for non-streaming responses, which already hold the whole body.
   private func failure(status: Int, data: Data, model: String? = nil) -> GatewayError {
-    if status == 401 || status == 403 { return .authenticationFailed }
-
-    let api = (try? JSONDecoder().decode(GatewayErrorEnvelope.self, from: data))?.error
-    let raw = String(data: data, encoding: .utf8)?
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    let apiMessage = (api?.message).flatMap { $0.isEmpty ? nil : $0 }
-    // Fall back to the raw body only when it is not a recognisable error envelope.
-    // Otherwise a message-less envelope would be shown to the user as raw JSON.
-    let detail = apiMessage ?? (api == nil ? (raw?.isEmpty == true ? nil : raw) : nil)
-
-    if status == 400, rejectsTemperature(api: api, message: detail) {
-      return .unsupportedParameter("temperature")
-    }
-    if let detail, !detail.isEmpty { return .apiError(detail) }
-    // A message-less 404 means the gateway lists the model but does not route it —
-    // what every imagen-*/gemini-*-image model on this proxy returns.
-    if status == 404 { return .modelNotAvailable(model ?? "") }
-    return .invalidResponse(status)
-  }
-
-  /// True when a 400 is complaining specifically about `temperature`. Providers word
-  /// this at least three ways ("Unsupported value:", "Unsupported parameter:",
-  /// "`temperature` is deprecated"), so fall back to the text when `param` is absent.
-  private func rejectsTemperature(api: GatewayAPIError?, message: String?) -> Bool {
-    if api?.param == "temperature" { return true }
-    guard let lower = message?.lowercased(), lower.contains("temperature") else { return false }
-    return lower.contains("unsupported") || lower.contains("not supported")
-      || lower.contains("does not support") || lower.contains("deprecated")
+    GatewayFailureMapper.error(status: status, body: data, model: model)
   }
 
   /// Collects an error response body, tolerating truncation.

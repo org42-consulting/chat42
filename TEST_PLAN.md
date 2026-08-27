@@ -1,87 +1,87 @@
 # Test Plan for Chat42
 
-## Overview
-This document outlines the testing procedures to ensure Chat42 meets App Store requirements and functions properly before submission.
+## Scope
 
-## Functional Testing
+Chat42 ships as a **Developer ID–signed, notarized DMG**, not through the Mac App
+Store. This plan covers that channel. The App Sandbox is therefore not required and
+is not enabled; `Chat42/Chat42-MAS.entitlements` holds a ready configuration for a
+store submission, along with the data-migration work that switch would need first.
 
-### 1. Core Application Features
-- [ ] App launches successfully on supported macOS versions
-- [ ] Conversation history persistence works correctly
-- [ ] All three AI backends (Ollama, MLX, Gateway) function properly
-- [ ] Model switching between backends works without issues
-- [ ] Settings configuration saves and loads correctly
-- [ ] System prompt and temperature settings work as expected
-- [ ] Conversation management (create, delete, rename) functions properly
+Two layers: what CI checks on every push, and what a person has to check by hand
+before tagging a release.
 
-### 2. Ollama Backend
-- [ ] Connection to local Ollama instance established
-- [ ] Model listing functionality works
-- [ ] Chat streaming responses work correctly
-- [ ] Error handling for unreachable Ollama instance
-- [ ] Model download and loading works (if applicable)
+## Automated (CI — `.github/workflows/ci.yml`)
 
-### 3. MLX Backend
-- [ ] Apple Silicon detection works properly
-- [ ] Model download functionality from Hugging Face
-- [ ] Model loading/unloading works correctly
-- [ ] Chat responses work with MLX models
-- [ ] Error handling for unsupported architectures
+Run locally with `swift test`, `swift format lint --recursive --strict Chat42/Sources Tests`,
+and `./scripts/check-localization.sh`.
 
-### 4. Gateway Backend
-- [ ] Connection to API endpoints works
-- [ ] API key authentication functions properly
-- [ ] Model listing from API works
-- [ ] Chat streaming responses work
-- [ ] Error handling for authentication and network issues
+| Area | Covered by |
+|---|---|
+| Markdown segmentation — fences, unterminated fences during streaming, language tags, ordering | `MessageSegmentTests` |
+| Gateway error classification — auth, provider messages, numeric codes, message-less envelopes, the four temperature-rejection phrasings | `GatewayFailureMapperTests` |
+| Image vs. chat vs. embedding model routing | `GatewayModelInfoTests` |
+| Context trimming — budget, system-prompt and newest-turn preservation, attachment replay, error exclusion | `ContextBuilderTests` |
+| Persistence round-trip, legacy files without newer fields, segment cache invalidation | `ConversationPersistenceTests` |
+| Attachment extraction, size limits, truncation | `AttachmentProcessorTests` |
+| MLX download path resolution and traversal refusal | `MLXDownloadPathTests` |
+| en/nl key parity, undefined key references | `scripts/check-localization.sh` |
+| Bundle assembles, is signed, ships both localizations and the privacy manifest | `package` job |
 
-## UI/UX Testing
-- [ ] All UI elements are properly displayed
-- [ ] Dark/light mode switching works
-- [ ] Responsive layout on different window sizes
-- [ ] Keyboard shortcuts function correctly
-- [ ] Menu items work as expected
-- [ ] Settings view displays properly
-- [ ] Error messages are clear and helpful
+**Not covered by tests, and worth knowing:** everything involving a live provider,
+the SwiftUI layer, and MLX inference. Those are the manual checks below.
 
-## Security Testing
-- [ ] Network requests are properly secured
-- [ ] No sensitive data is logged or transmitted
-- [ ] Privacy manifest is correctly implemented
-- [ ] Appropriate permissions are requested
-- [ ] No insecure HTTP connections (except localhost for local testing)
+## Manual — before tagging a release
 
-## Compatibility Testing
-- [ ] Works on macOS 14.0 and later
-- [ ] Works on Apple Silicon (M1/M2/M3/M4/M5) Macs
-- [ ] Memory usage is reasonable
-- [ ] Performance is acceptable with different model sizes
-- [ ] No crashes or freezes during normal usage
+### Backends
 
-## App Store Compliance
-- [ ] All required privacy information is provided
-- [ ] Appropriate metadata in Info.plist
-- [ ] No prohibited content or features
-- [ ] Proper localization support
-- [ ] Appropriate copyright and license information
+- [ ] **Ollama**: models list; a reply streams; stopping mid-reply keeps the partial
+      text; with Ollama stopped, the sidebar dot goes red and the error names Ollama.
+- [ ] **MLX** (Apple Silicon): download a small model, watch progress, **cancel a
+      download mid-flight and confirm it stops**; load; reply streams; unload.
+- [ ] **Gateway**: models list; a reply streams; a reasoning-tier model that rejects
+      `temperature` still answers (the retry path); an image model returns an image.
+- [ ] Switching backends mid-conversation records the model that served each turn.
 
-## Performance Testing
-- [ ] App launches within 5 seconds
-- [ ] Response times are reasonable (under 10 seconds for typical queries)
-- [ ] Memory usage is within acceptable limits
-- [ ] No excessive battery drain
+### The regressions this release fixes
 
-## Accessibility Testing
-- [ ] All UI elements are accessible via keyboard
-- [ ] Proper labeling for screen readers
-- [ ] Color contrast meets accessibility guidelines
-- [ ] Zoom functionality works properly
+- [ ] Attach a PDF, ask about it, then ask a **follow-up** — the model still knows
+      the contents.
+- [ ] Send a long chat to Ollama and confirm early turns are not silently lost at
+      4096 tokens.
+- [ ] Start a reply in chat A, switch to chat B, and **type and send there** while A
+      is still streaming.
+- [ ] Ask for a long reply (~1000 words) and confirm it renders smoothly to the end.
+- [ ] Regenerate; edit-and-resend an earlier message; delete a single message.
+- [ ] Export a conversation to Markdown and reopen it.
+- [ ] Quit mid-conversation, relaunch, confirm the last turn is there.
 
-## Final Checklist Before Submission
-- [ ] All tests pass successfully
-- [ ] App icon and screenshots are ready
-- [ ] Privacy manifest is complete
-- [ ] App description and keywords are prepared
-- [ ] Release notes are updated
-- [ ] Code signing is properly configured
-- [ ] Build is optimized for release
+### Localization
+
+- [ ] Run the app in Dutch (`Chat42.app/Contents/MacOS/Chat42 -AppleLanguages '(nl)'`).
+- [ ] Stop Ollama and confirm the error is **Dutch**, not English.
+- [ ] Untitled chats are not labelled "New Chat".
+- [ ] MLX model descriptions are translated.
+
+### Accessibility
+
+- [ ] VoiceOver announces every toolbar and composer button by name.
+- [ ] The whole send flow is reachable by keyboard alone.
+- [ ] Settings panes change with arrow keys and the current pane is highlighted.
+- [ ] Connection status is understandable without seeing colour.
+
+### Packaging
+
+- [ ] `./build.sh` with a Developer ID in the keychain reports that identity, not
+      ad-hoc.
+- [ ] `./package.sh` with notary credentials completes and staples.
+- [ ] `xcrun stapler validate Chat42.dmg` passes.
+- [ ] **Install from the DMG on a Mac that has never seen the app** — the real
+      Gatekeeper test, and the one an un-notarized build fails.
+- [ ] `codesign -dv --verbose=4 Chat42.app` shows the hardened runtime enabled.
+
+### Sanity
+
+- [ ] Launches on a clean macOS 14 install.
+- [ ] Memory is stable across a long conversation and does not climb per token.
+- [ ] Deleting a conversation with generated images removes the image files.
+- [ ] An oversized attachment is refused with a clear message rather than uploaded.

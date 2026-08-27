@@ -8,10 +8,14 @@ enum OllamaError: LocalizedError {
 
   var errorDescription: String? {
     switch self {
-    case .unreachable(let url): return "Cannot reach Ollama at \(url). Is it running?"
-    case .invalidResponse: return "Invalid response from Ollama"
-    case .apiError(let msg): return "Ollama error: \(msg)"
-    case .decodingError(let err): return "Decoding error: \(err.localizedDescription)"
+    case .unreachable(let url):
+      return String(format: String(localized: "error.ollama.unreachable"), url)
+    case .invalidResponse:
+      return String(localized: "error.ollama.invalid_response")
+    case .apiError(let msg):
+      return String(format: String(localized: "error.ollama.api_error"), msg)
+    case .decodingError(let err):
+      return String(format: String(localized: "error.ollama.decoding"), err.localizedDescription)
     }
   }
 }
@@ -55,37 +59,41 @@ struct OllamaChatResponse: Codable {
 
 // MARK: - Service
 
-actor OllamaService {
+actor OllamaService: ChatBackend {
   var baseURL: String
+  /// Mirrors the app's context budget into Ollama's `num_ctx`.
+  ///
+  /// This has to be set, not left to default: Ollama's own default is 2048–4096
+  /// depending on version, which silently truncates a long chat or an attached
+  /// document even on a model whose real window is far larger.
+  var contextTokenLimit: Int
 
-  init(baseURL: String = "http://localhost:11434") {
+  init(baseURL: String = "http://localhost:11434", contextTokenLimit: Int = 8192) {
     self.baseURL = baseURL
+    self.contextTokenLimit = contextTokenLimit
   }
 
   func updateBaseURL(_ url: String) {
     baseURL = url
   }
 
-  // MARK: - Ping / health check
-  func isReachable() async -> Bool {
-    guard let url = URL(string: "\(baseURL)/api/tags") else { return false }
-    var req = URLRequest(url: url, timeoutInterval: 3)
-    req.httpMethod = "GET"
-    do {
-      let (_, response) = try await URLSession.shared.data(for: req)
-      return (response as? HTTPURLResponse)?.statusCode == 200
-    } catch {
-      return false
-    }
+  func updateContextTokenLimit(_ limit: Int) {
+    contextTokenLimit = limit
   }
 
   // MARK: - List models
+  //
+  // Doubles as the reachability check: a caller that wants to know whether Ollama
+  // is up wants the model list anyway, and asking twice made every refresh two
+  // identical round-trips.
   func fetchModels() async throws -> [OllamaModelInfo] {
     guard let url = URL(string: "\(baseURL)/api/tags") else {
       throw OllamaError.unreachable(baseURL)
     }
+    var request = URLRequest(url: url, timeoutInterval: 5)
+    request.httpMethod = "GET"
     do {
-      let (data, response) = try await URLSession.shared.data(from: url)
+      let (data, response) = try await URLSession.shared.data(for: request)
       guard (response as? HTTPURLResponse)?.statusCode == 200 else {
         throw OllamaError.invalidResponse
       }
@@ -101,15 +109,17 @@ actor OllamaService {
   }
 
   // MARK: - Streaming chat
-  func chat(
+  func stream(
     model: String,
     messages: [ChatMessage],
-    temperature: Double = 0.7
+    temperature: Double
   ) -> AsyncThrowingStream<String, Error> {
-    AsyncThrowingStream { continuation in
-      Task {
-        guard let url = URL(string: "\(baseURL)/api/chat") else {
-          continuation.finish(throwing: OllamaError.unreachable(self.baseURL))
+    let numCtx = contextTokenLimit
+    let base = baseURL
+    return AsyncThrowingStream { continuation in
+      let task = Task {
+        guard let url = URL(string: "\(base)/api/chat") else {
+          continuation.finish(throwing: OllamaError.unreachable(base))
           return
         }
 
@@ -130,7 +140,7 @@ actor OllamaService {
           model: model,
           messages: chatMessages,
           stream: true,
-          options: OllamaOptions(temperature: temperature, numCtx: 4096)
+          options: OllamaOptions(temperature: temperature, numCtx: numCtx)
         )
 
         guard let body = try? JSONEncoder().encode(requestBody) else {
@@ -142,15 +152,23 @@ actor OllamaService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
+        // Time-to-first-token on a cold model can run to minutes while Ollama
+        // pages weights in; the default 60s would cancel valid work.
+        request.timeoutInterval = 600
 
         do {
           let (bytes, response) = try await URLSession.shared.bytes(for: request)
-          guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+          guard let http = response as? HTTPURLResponse else {
             continuation.finish(throwing: OllamaError.invalidResponse)
             return
           }
+          guard http.statusCode == 200 else {
+            throw OllamaError.apiError(
+              await Self.errorMessage(from: bytes, status: http.statusCode))
+          }
 
           for try await line in bytes.lines {
+            try Task.checkCancellation()
             guard !line.isEmpty,
               let data = line.data(using: .utf8)
             else { continue }
@@ -174,15 +192,39 @@ actor OllamaService {
           continuation.finish(throwing: error)
         }
       }
+      continuation.onTermination = { _ in task.cancel() }
     }
+  }
+
+  /// Ollama reports a failed chat as a JSON `{"error": "..."}` body rather than a
+  /// bare status, and the message is the only actionable part.
+  private static func errorMessage(from bytes: URLSession.AsyncBytes, status: Int) async -> String {
+    var data = Data()
+    do {
+      for try await byte in bytes {
+        data.append(byte)
+        if data.count >= 8_192 { break }
+      }
+    } catch {
+      // A truncated body still usually contains the message.
+    }
+    struct Envelope: Decodable { let error: String }
+    if let envelope = try? JSONDecoder().decode(Envelope.self, from: data),
+      !envelope.error.isEmpty
+    {
+      return envelope.error
+    }
+    let raw = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return raw?.isEmpty == false ? raw! : "HTTP \(status)"
   }
 
   // MARK: - Pull model
   func pullModel(name: String) -> AsyncThrowingStream<PullProgress, Error> {
-    AsyncThrowingStream { continuation in
-      Task {
-        guard let url = URL(string: "\(baseURL)/api/pull") else {
-          continuation.finish(throwing: OllamaError.unreachable(self.baseURL))
+    let base = baseURL
+    return AsyncThrowingStream { continuation in
+      let task = Task {
+        guard let url = URL(string: "\(base)/api/pull") else {
+          continuation.finish(throwing: OllamaError.unreachable(base))
           return
         }
 
@@ -197,6 +239,7 @@ actor OllamaService {
         do {
           let (bytes, _) = try await URLSession.shared.bytes(for: request)
           for try await line in bytes.lines {
+            try Task.checkCancellation()
             guard let data = line.data(using: .utf8),
               let progress = try? JSONDecoder().decode(PullProgress.self, from: data)
             else { continue }
@@ -211,6 +254,7 @@ actor OllamaService {
           continuation.finish(throwing: error)
         }
       }
+      continuation.onTermination = { _ in task.cancel() }
     }
   }
 

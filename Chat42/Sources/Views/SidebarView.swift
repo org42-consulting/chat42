@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SidebarView: View {
   @Environment(AppState.self) private var state
-  @State private var showSettings = false
   @State private var searchText = ""
   @State private var renamingId: UUID?
   @State private var renameText = ""
@@ -24,6 +23,7 @@ struct SidebarView: View {
         TextField(String(localized: "sidebar.search.placeholder"), text: $searchText)
           .textFieldStyle(.plain)
           .font(.callout)
+          .accessibilityLabel(Text("sidebar.search.placeholder"))
         if !searchText.isEmpty {
           Button {
             searchText = ""
@@ -32,6 +32,8 @@ struct SidebarView: View {
               .foregroundStyle(.secondary)
           }
           .buttonStyle(.plain)
+          .help(String(localized: "sidebar.search.clear"))
+          .accessibilityLabel(Text("sidebar.search.clear"))
         }
       }
       .padding(.horizontal, 12)
@@ -53,11 +55,6 @@ struct SidebarView: View {
       sidebarFooter
     }
     .background(Color.sidebarBackground)
-    .sheet(isPresented: $showSettings) {
-      SettingsView()
-        .environment(state)
-        .environment(MLXService.shared)
-    }
   }
 
   // MARK: - Header
@@ -83,6 +80,7 @@ struct SidebarView: View {
       }
       .buttonStyle(.plain)
       .help(String(localized: "sidebar.new_chat.help"))
+      .accessibilityLabel(Text("sidebar.new_chat.help"))
       .keyboardShortcut("n", modifiers: .command)
     }
     .padding(.horizontal, 14)
@@ -188,9 +186,10 @@ struct SidebarView: View {
 
   private var sidebarFooter: some View {
     HStack {
-      Button {
-        showSettings = true
-      } label: {
+      // Opens the app's one Settings scene. Presenting a second copy as a sheet
+      // meant two independent instances with different window chrome, and edits in
+      // one were invisible to the other.
+      SettingsLink {
         Label(String(localized: "sidebar.settings"), systemImage: "gear")
           .font(.callout)
           .foregroundStyle(.secondary)
@@ -221,10 +220,14 @@ private func statusDot(reachable: Bool, onLabel: String, offLabel: String) -> so
     Circle()
       .fill(reachable ? Color.green : Color.red)
       .frame(width: 6, height: 6)
+      .accessibilityHidden(true)
     Text(reachable ? onLabel : offLabel)
       .font(.caption2)
       .foregroundStyle(.secondary)
   }
+  // Colour alone must not be the only channel: the label already carries the state
+  // in words, so the combined element reads correctly.
+  .accessibilityElement(children: .combine)
 }
 
 extension Color {

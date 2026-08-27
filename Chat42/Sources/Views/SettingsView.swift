@@ -1,19 +1,21 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
   @Environment(AppState.self) private var state
   @Environment(MLXService.self) private var mlxService
-  @Environment(\.dismiss) private var dismiss
 
   @State private var ollamaURL: String = ""
   @State private var systemPrompt: String = ""
   @State private var temperature: Double = 0.7
+  @State private var contextTokenLimit: Int = AppState.defaultContextTokenLimit
   @State private var selectedTab: SettingsTab = .general
 
   // Toast
   @State private var toastMessage: String = ""
   @State private var toastSuccess: Bool = true
   @State private var showToast: Bool = false
+  @State private var toastDismissTask: Task<Void, Never>?
 
   // Ollama test
   @State private var isTestingOllama: Bool = false
@@ -25,8 +27,10 @@ struct SettingsView: View {
   @State private var showAPIKey: Bool = false
   @State private var isTestingGateway: Bool = false
 
-  enum SettingsTab: String, CaseIterable {
+  enum SettingsTab: String, CaseIterable, Identifiable {
     case general, ollama, gateway, mlx, appearance
+
+    var id: Self { self }
 
     var label: String {
       switch self {
@@ -51,10 +55,11 @@ struct SettingsView: View {
 
   var body: some View {
     NavigationSplitView {
-      List(SettingsTab.allCases, id: \.self) { tab in
+      // Bound selection, not a tap gesture: without it the list highlights nothing
+      // and the arrow keys do not move between panes.
+      List(SettingsTab.allCases, selection: $selectedTab) { tab in
         Label(tab.label, systemImage: tab.icon)
           .tag(tab)
-          .onTapGesture { selectedTab = tab }
       }
       .navigationSplitViewColumnWidth(min: 150, ideal: 170)
     } detail: {
@@ -69,7 +74,7 @@ struct SettingsView: View {
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
-    .frame(width: 620, height: 460)
+    .frame(width: 640, height: 480)
     .overlay(alignment: .bottom) {
       if showToast {
         HStack(spacing: 8) {
@@ -84,25 +89,36 @@ struct SettingsView: View {
         .shadow(radius: 4)
         .padding(.bottom, 16)
         .transition(.move(edge: .bottom).combined(with: .opacity))
+        .accessibilityElement(children: .combine)
       }
     }
     .animation(.easeInOut(duration: 0.25), value: showToast)
-    .onAppear {
-      ollamaURL = state.ollamaBaseURL
-      systemPrompt = state.systemPrompt
-      temperature = state.temperature
-      gatewayURL = state.gatewayBaseURL
-      gatewayAPIKey = KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
-    }
+    .onAppear { loadFromState() }
+    // Closing the window without pressing Done should not silently discard edits.
+    .onDisappear { apply() }
     .toolbar {
       ToolbarItem(placement: .confirmationAction) {
-        Button(String(localized: "settings.done")) { applyAndDismiss() }
-          .keyboardShortcut(.return)
+        Button(String(localized: "settings.done")) {
+          apply()
+          NSApp.keyWindow?.performClose(nil)
+        }
+        .keyboardShortcut(.return)
       }
     }
   }
 
+  private func loadFromState() {
+    ollamaURL = state.ollamaBaseURL
+    systemPrompt = state.systemPrompt
+    temperature = state.temperature
+    contextTokenLimit = state.contextTokenLimit
+    gatewayURL = state.gatewayBaseURL
+    gatewayAPIKey = KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
+  }
+
   // MARK: - General
+
+  private static let contextChoices = [2048, 4096, 8192, 16384, 32768, 65536, 131_072]
 
   private var generalSettings: some View {
     Form {
@@ -116,6 +132,7 @@ struct SettingsView: View {
               .scrollContentBackground(.hidden)
               .padding(6)
               .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
+              .accessibilityLabel(Text("settings.general.system_prompt.label"))
             Text("settings.general.system_prompt.hint")
               .font(.caption)
               .foregroundStyle(.secondary)
@@ -126,6 +143,7 @@ struct SettingsView: View {
           HStack(spacing: 8) {
             Slider(value: $temperature, in: 0...2, step: 0.05)
               .frame(width: 160)
+              .accessibilityLabel(Text("settings.general.temperature.label"))
             Text(String(format: "%.2f", temperature))
               .font(.callout)
               .monospacedDigit()
@@ -136,6 +154,25 @@ struct SettingsView: View {
             Text("settings.general.temperature.label")
               .font(.callout)
             Text("settings.general.temperature.hint")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+
+        LabeledContent {
+          Picker("", selection: $contextTokenLimit) {
+            ForEach(Self.contextChoices, id: \.self) { limit in
+              Text(verbatim: "\(limit / 1024)K").tag(limit)
+            }
+          }
+          .labelsHidden()
+          .frame(width: 100)
+          .accessibilityLabel(Text("settings.general.context.label"))
+        } label: {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("settings.general.context.label")
+              .font(.callout)
+            Text("settings.general.context.hint")
               .font(.caption)
               .foregroundStyle(.secondary)
           }
@@ -174,10 +211,16 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .help(
-              String(
-                localized: showAPIKey
+              showAPIKey
+                ? String(localized: "settings.gateway.api_key.hide")
+                : String(localized: "settings.gateway.api_key.show")
+            )
+            .accessibilityLabel(
+              Text(
+                showAPIKey
                   ? "settings.gateway.api_key.hide"
-                  : "settings.gateway.api_key.show"))
+                  : "settings.gateway.api_key.show")
+            )
           }
         }
 
@@ -199,12 +242,14 @@ struct SettingsView: View {
               .font(.callout)
               .foregroundStyle(state.gatewayReachable ? .green : .secondary)
             }
+            .accessibilityElement(children: .combine)
+
             Button {
               isTestingGateway = true
               Task {
                 await state.applyGatewaySettings(baseURL: gatewayURL, apiKey: gatewayAPIKey)
                 isTestingGateway = false
-                showToast(
+                presentToast(
                   success: state.gatewayReachable,
                   message: state.gatewayReachable
                     ? String(localized: "settings.gateway.status.connected")
@@ -352,16 +397,18 @@ struct SettingsView: View {
                 .font(.callout)
                 .foregroundStyle(result ? .green : .red)
               }
+              .accessibilityElement(children: .combine)
             }
             Button {
               isTestingOllama = true
               ollamaTestResult = nil
               state.ollamaBaseURL = ollamaURL
+              state.contextTokenLimit = contextTokenLimit
               Task {
                 await state.applySettings()
                 ollamaTestResult = state.ollamaReachable
                 isTestingOllama = false
-                showToast(
+                presentToast(
                   success: state.ollamaReachable,
                   message: state.ollamaReachable
                     ? String(localized: "settings.ollama.status.connected")
@@ -418,6 +465,7 @@ struct SettingsView: View {
               Image(systemName: "circle.fill")
                 .font(.caption2)
                 .foregroundStyle(.green)
+                .accessibilityHidden(true)
             }
           }
         }
@@ -465,8 +513,8 @@ struct SettingsView: View {
   @ViewBuilder
   private func mlxModelRow(_ model: MLXModelInfo) -> some View {
     let downloadState = mlxService.downloadStates[model.repoId] ?? .notDownloaded
-    let isLoaded = mlxService.loadedModelId == model.id
-    let isThisLoading = mlxService.isLoading && mlxLoadingId == model.id
+    let isLoaded = mlxService.loadedModelId == model.repoId
+    let isThisLoading = mlxService.isLoading && mlxLoadingId == model.repoId
 
     HStack(alignment: .center, spacing: 12) {
       VStack(alignment: .leading, spacing: 3) {
@@ -513,7 +561,7 @@ struct SettingsView: View {
     switch downloadState {
     case .notDownloaded:
       Button {
-        Task { await mlxService.downloadModel(repoId: model.repoId) }
+        mlxService.downloadModel(repoId: model.repoId)
       } label: {
         Label(String(localized: "settings.mlx.download_button"), systemImage: "arrow.down.circle")
           .font(.callout)
@@ -523,13 +571,26 @@ struct SettingsView: View {
       .disabled(!mlxService.isAvailable)
 
     case .downloading(let progress):
-      VStack(alignment: .trailing, spacing: 2) {
-        ProgressView(value: progress)
-          .frame(width: 90)
-        Text("\(Int(progress * 100))%")
-          .font(.caption2)
-          .foregroundStyle(.secondary)
-          .monospacedDigit()
+      HStack(spacing: 8) {
+        VStack(alignment: .trailing, spacing: 2) {
+          ProgressView(value: progress)
+            .frame(width: 90)
+          Text("\(Int(progress * 100))%")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .monospacedDigit()
+        }
+        // These downloads run to tens of gigabytes; starting one by mistake used to
+        // mean quitting the app to stop it.
+        Button(role: .destructive) {
+          mlxService.cancelDownload(repoId: model.repoId)
+        } label: {
+          Image(systemName: "xmark.circle")
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .help(String(localized: "settings.mlx.cancel_help"))
+        .accessibilityLabel(Text("settings.mlx.cancel_help"))
       }
 
     case .downloaded:
@@ -549,13 +610,13 @@ struct SettingsView: View {
             .foregroundStyle(.green)
         } else {
           Button(String(localized: "settings.mlx.load_button")) {
-            mlxLoadingId = model.id
+            mlxLoadingId = model.repoId
             state.selectedMLXModel = model
             Task {
               do {
                 try await mlxService.loadModel(repoId: model.repoId)
               } catch {
-                showToast(success: false, message: error.localizedDescription)
+                presentToast(success: false, message: error.localizedDescription)
               }
               mlxLoadingId = nil
             }
@@ -573,12 +634,13 @@ struct SettingsView: View {
         .buttonStyle(.plain)
         .foregroundStyle(.red)
         .help(String(localized: "settings.mlx.delete_help"))
+        .accessibilityLabel(Text("settings.mlx.delete_help"))
         .disabled(isThisLoading)
       }
 
     case .failed:
       Button {
-        Task { await mlxService.downloadModel(repoId: model.repoId) }
+        mlxService.downloadModel(repoId: model.repoId)
       } label: {
         Label(String(localized: "settings.mlx.retry_button"), systemImage: "arrow.clockwise")
           .font(.callout)
@@ -610,27 +672,32 @@ struct SettingsView: View {
 
   // MARK: - Toast
 
-  private func showToast(success: Bool, message: String) {
+  private func presentToast(success: Bool, message: String) {
     toastSuccess = success
     toastMessage = message
     showToast = true
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+    // Cancellable, so a second test result does not get hidden early by the first
+    // one's timer.
+    toastDismissTask?.cancel()
+    toastDismissTask = Task {
+      try? await Task.sleep(for: .milliseconds(2500))
+      guard !Task.isCancelled else { return }
       showToast = false
     }
   }
 
   // MARK: - Apply
 
-  private func applyAndDismiss() {
+  private func apply() {
     state.ollamaBaseURL = ollamaURL
     state.systemPrompt = systemPrompt
     state.temperature = temperature
+    state.contextTokenLimit = contextTokenLimit
     Task {
       await state.applySettings()
       // Applied unconditionally: skipping this when the field is empty made it
       // impossible to clear a configured gateway — the old URL stayed in defaults.
       await state.applyGatewaySettings(baseURL: gatewayURL, apiKey: gatewayAPIKey)
     }
-    dismiss()
   }
 }

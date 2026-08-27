@@ -8,8 +8,16 @@
 // Resources (Info.plist, Assets.xcassets, *.lproj, entitlements) are NOT
 // declared here — they are copied into the .app bundle by build.sh, which
 // also converts AppIcon.appiconset to AppIcon.icns via iconutil (a CLT tool).
+//
+// Compiler settings must stay in step with project.yml's `settings.base`, or the
+// two build paths disagree about what compiles: strict concurrency was previously
+// enabled only in Xcode, so a `swift build` could pass on code the IDE rejected.
 
 import PackageDescription
+
+let swiftSettings: [SwiftSetting] = [
+    .enableExperimentalFeature("StrictConcurrency")
+]
 
 let package = Package(
     name: "Chat42",
@@ -27,7 +35,14 @@ let package = Package(
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples")
             ],
-            path: "Chat42/Sources"
+            path: "Chat42/Sources",
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "Chat42Tests",
+            dependencies: ["Chat42"],
+            path: "Tests/Chat42Tests",
+            swiftSettings: swiftSettings
         )
     ]
 )
