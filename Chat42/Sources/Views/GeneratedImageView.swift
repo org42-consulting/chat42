@@ -68,17 +68,25 @@ struct GeneratedImageView: View {
     }
   }
 
-  /// Reads and decodes off the main actor: a 1024×1024 PNG decode is long enough to
-  /// drop frames if it happens during a scroll.
+  /// Reads the file off the main actor, then wraps it here.
+  ///
+  /// Only the read crosses the boundary: `Data` is Sendable and `NSImage` is not,
+  /// so building the image on the far side would be sending a non-Sendable value
+  /// back to the main actor. That costs nothing in practice — AppKit decodes
+  /// lazily at draw time, so the disk read is the part worth moving off-main.
+  ///
+  /// The type annotation is load-bearing. Without it the compiler infers the
+  /// task's `Success` type differently across Swift versions: 6.3 reads it as
+  /// `NSImage?`, 6.1 erases it to `NSObject?` and fails to compile.
   private func load() async {
     guard let filename = attachment.storedFilename else {
       didAttemptLoad = true
       return
     }
-    let decoded = await Task.detached(priority: .userInitiated) {
-      ImageStore.load(filename).flatMap { NSImage(data: $0) }
+    let data: Data? = await Task.detached(priority: .userInitiated) {
+      ImageStore.load(filename)
     }.value
-    image = decoded
+    image = data.flatMap { NSImage(data: $0) }
     didAttemptLoad = true
   }
 
