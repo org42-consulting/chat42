@@ -234,3 +234,70 @@
 "mlx.model.llama3_8b.desc" = "8B-instructiemodel van Meta";
 "mlx.model.llama3_70b.desc" = "70B-instructiemodel van Meta";
 "mlx.model.phi3_medium.desc" = "Middelgroot taalmodel van Microsoft";
+
+
+/* Toegevoegd: promptsjablonen */
+"preset.untitled" = "Naamloos sjabloon";
+"preset.uses_current" = "Gebruikt huidige instellingen";
+"preset.new.name" = "Nieuw sjabloon";
+"preset.starter.code_review.name" = "Codereviewer";
+"preset.starter.code_review.prompt" = "Je beoordeelt code. Noem eerst fouten in de werking, daarna leesbaarheid. Wees specifiek en noem de regel. Zeg het als iets goed is.";
+"preset.starter.translate_nl.name" = "Vertaal naar het Nederlands";
+"preset.starter.translate_nl.prompt" = "Vertaal wat de gebruiker stuurt naar natuurlijk Nederlands. Geef alleen de vertaling, zonder commentaar.";
+"preset.starter.commit.name" = "Commitbericht";
+"preset.starter.commit.prompt" = "Schrijf een git-commitbericht voor de gegeven diff. Een korte gebiedende onderwerpregel, een lege regel, dan wat er is veranderd en waarom.";
+"settings.tab.presets" = "Sjablonen";
+"settings.presets.section" = "Promptsjablonen";
+"settings.presets.description" = "Een sjabloon is een systeemprompt plus eventueel de backend, het model en de temperatuur die erbij horen. Start ermee via Archief → Nieuw gesprek uit sjabloon.";
+"settings.presets.empty" = "Nog geen sjablonen.";
+"settings.presets.add" = "Sjabloon toevoegen";
+"settings.presets.delete" = "Verwijderen";
+"settings.presets.edit" = "Sjabloon bewerken";
+"settings.presets.name" = "Naam";
+"settings.presets.prompt" = "Systeemprompt";
+"settings.presets.backend" = "Backend";
+"settings.presets.use_current" = "Huidige gebruiken";
+"settings.presets.model" = "Model";
+"settings.presets.model.placeholder" = "Leeg laten voor huidige";
+"settings.presets.temperature" = "Temperatuur";
+"settings.presets.pin_temperature" = "Temperatuur vastzetten";
+"settings.presets.save" = "Bewaren";
+"settings.presets.cancel" = "Annuleren";
+"menu.new_from_preset" = "Nieuw gesprek uit sjabloon";
+/* Toegevoegd: navigatie en zoeken */
+"menu.find" = "Zoek in gesprekken";
+"menu.conversations" = "Gesprekken";
+"menu.next_conversation" = "Volgend gesprek";
+"menu.previous_conversation" = "Vorig gesprek";
+"menu.jump_to" = "Gesprek %lld";
+/* Toegevoegd: vastgezette documenten */
+"chat.pinned.help" = "Vastgezette documenten";
+"chat.pinned.title" = "Vastgezette documenten";
+"chat.pinned.description" = "Blijven bij elke beurt in de context, anders dan een bijlage, die het model alleen ziet op de beurt waarop je hem toevoegt.";
+"chat.pinned.empty" = "Niets vastgezet";
+"chat.pinned.add" = "Bestand toevoegen…";
+"chat.pinned.remove" = "Losmaken";
+"chat.pinned.remove.a11y" = "%@ losmaken";
+"chat.pinned.tokens" = "tokens";
+/* Toegevoegd: vergelijking */
+"chat.compare.help" = "Vergelijk met een tweede model";
+"chat.compare.off" = "Geen vergelijking";
+"message.retry_with" = "Opnieuw met";
+/* Toegevoegd: contextmeter */
+"chat.context.usage" = "%1$lld van %2$lld tokens gebruikt";
+"chat.context.help" = "Geschatte context die het volgende verzoek gebruikt";
+"chat.context.trimming" = "Geschiedenis wordt ingekort: de oudste beurten passen niet meer";
+"chat.cost.help" = "Geschatte kosten, op basis van de prijs in de gateway-instellingen";
+"settings.gateway.price.label" = "Prijs per miljoen tokens";
+"settings.gateway.price.unit" = "per 1 mln tokens";
+"settings.gateway.price.hint" = "Optioneel. Stel dit in om geschatte kosten te zien; laat op 0 om ze te verbergen.";
+/* Toegevoegd: MLX automatisch laden */
+"settings.mlx.autoload" = "Laatste model laden bij starten";
+"settings.mlx.autoload.hint" = "Herstelt het model dat in gebruik was bij afsluiten, zodat MLX klaarstaat zonder eerst naar Instellingen te gaan.";
+/* Toegevoegd: menubalk en diensten */
+"quick.title" = "Snel vragen";
+"quick.placeholder" = "Stel een vraag…";
+"quick.send" = "Vraag";
+"quick.open" = "Open in Chat42";
+"quick.thinking" = "Denkt na…";
+"service.no_text" = "Selecteer eerst wat tekst.";

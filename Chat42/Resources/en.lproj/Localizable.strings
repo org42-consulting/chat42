@@ -234,3 +234,70 @@
 "mlx.model.llama3_8b.desc" = "Meta's 8B instruction model";
 "mlx.model.llama3_70b.desc" = "Meta's 70B instruction model";
 "mlx.model.phi3_medium.desc" = "Microsoft's medium-sized language model";
+
+
+/* Added: prompt presets */
+"preset.untitled" = "Untitled preset";
+"preset.uses_current" = "Uses current settings";
+"preset.new.name" = "New preset";
+"preset.starter.code_review.name" = "Code reviewer";
+"preset.starter.code_review.prompt" = "You review code. Point out correctness bugs first, then clarity. Be specific and cite the line. Say when something is fine.";
+"preset.starter.translate_nl.name" = "Translate to Dutch";
+"preset.starter.translate_nl.prompt" = "Translate what the user sends into natural Dutch. Return only the translation, with no commentary.";
+"preset.starter.commit.name" = "Commit message";
+"preset.starter.commit.prompt" = "Write a git commit message for the diff provided. A short imperative subject line, a blank line, then what changed and why.";
+"settings.tab.presets" = "Presets";
+"settings.presets.section" = "Prompt presets";
+"settings.presets.description" = "A preset is a system prompt plus, optionally, the backend, model, and temperature that suit it. Start a chat from one with File → New Chat from Preset.";
+"settings.presets.empty" = "No presets yet.";
+"settings.presets.add" = "Add preset";
+"settings.presets.delete" = "Delete";
+"settings.presets.edit" = "Edit preset";
+"settings.presets.name" = "Name";
+"settings.presets.prompt" = "System prompt";
+"settings.presets.backend" = "Backend";
+"settings.presets.use_current" = "Use current";
+"settings.presets.model" = "Model";
+"settings.presets.model.placeholder" = "Leave empty for current";
+"settings.presets.temperature" = "Temperature";
+"settings.presets.pin_temperature" = "Pin temperature";
+"settings.presets.save" = "Save";
+"settings.presets.cancel" = "Cancel";
+"menu.new_from_preset" = "New Chat from Preset";
+/* Added: navigation and search */
+"menu.find" = "Find in Conversations";
+"menu.conversations" = "Conversations";
+"menu.next_conversation" = "Next Conversation";
+"menu.previous_conversation" = "Previous Conversation";
+"menu.jump_to" = "Conversation %lld";
+/* Added: pinned documents */
+"chat.pinned.help" = "Pinned documents";
+"chat.pinned.title" = "Pinned documents";
+"chat.pinned.description" = "Kept in context for every turn, unlike an attachment, which the model only sees on the turn you add it.";
+"chat.pinned.empty" = "Nothing pinned";
+"chat.pinned.add" = "Add file…";
+"chat.pinned.remove" = "Unpin";
+"chat.pinned.remove.a11y" = "Unpin %@";
+"chat.pinned.tokens" = "tokens";
+/* Added: comparison */
+"chat.compare.help" = "Compare with a second model";
+"chat.compare.off" = "No comparison";
+"message.retry_with" = "Retry with";
+/* Added: context meter */
+"chat.context.usage" = "%1$lld of %2$lld tokens used";
+"chat.context.help" = "Estimated context used by the next request";
+"chat.context.trimming" = "History is being trimmed: the oldest turns no longer fit";
+"chat.cost.help" = "Estimated cost, based on the price set in Gateway settings";
+"settings.gateway.price.label" = "Price per million tokens";
+"settings.gateway.price.unit" = "per 1M tokens";
+"settings.gateway.price.hint" = "Optional. Set this to see an estimated cost; leave at 0 to hide it.";
+/* Added: MLX auto-load */
+"settings.mlx.autoload" = "Load last model at launch";
+"settings.mlx.autoload.hint" = "Restores the model that was in use when you quit, so MLX is ready without a trip through Settings.";
+/* Added: menu bar and services */
+"quick.title" = "Quick ask";
+"quick.placeholder" = "Ask something…";
+"quick.send" = "Ask";
+"quick.open" = "Open in Chat42";
+"quick.thinking" = "Thinking…";
+"service.no_text" = "Select some text first.";

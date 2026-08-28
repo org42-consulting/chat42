@@ -28,13 +28,14 @@ struct SettingsView: View {
   @State private var isTestingGateway: Bool = false
 
   enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, ollama, gateway, mlx, appearance
+    case general, presets, ollama, gateway, mlx, appearance
 
     var id: Self { self }
 
     var label: String {
       switch self {
       case .general: return String(localized: "settings.tab.general")
+      case .presets: return String(localized: "settings.tab.presets")
       case .ollama: return String(localized: "settings.tab.ollama")
       case .gateway: return String(localized: "settings.tab.gateway")
       case .mlx: return String(localized: "settings.tab.mlx")
@@ -45,6 +46,7 @@ struct SettingsView: View {
     var icon: String {
       switch self {
       case .general: return "gearshape"
+      case .presets: return "text.badge.star"
       case .ollama: return "server.rack"
       case .gateway: return "globe"
       case .mlx: return "apple.terminal"
@@ -66,6 +68,7 @@ struct SettingsView: View {
       Group {
         switch selectedTab {
         case .general: generalSettings
+        case .presets: PresetSettingsView().environment(state)
         case .ollama: ollamaSettings
         case .gateway: gatewaySettings
         case .mlx: mlxSettings
@@ -227,6 +230,33 @@ struct SettingsView: View {
         Text("settings.gateway.api_key.hint")
           .font(.caption)
           .foregroundStyle(.secondary)
+
+        LabeledContent {
+          HStack(spacing: 6) {
+            TextField(
+              "0",
+              value: Binding(
+                get: { state.gatewayPricePerMillion },
+                set: { state.gatewayPricePerMillion = max(0, $0) }
+              ),
+              format: .number
+            )
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 80)
+            .accessibilityLabel(Text("settings.gateway.price.label"))
+            Text("settings.gateway.price.unit")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        } label: {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("settings.gateway.price.label")
+              .font(.callout)
+            Text("settings.gateway.price.hint")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
 
         LabeledContent(String(localized: "settings.ollama.status.label")) {
           HStack(spacing: 10) {
@@ -491,6 +521,22 @@ struct SettingsView: View {
           .font(.callout)
           .foregroundStyle(.orange)
         }
+
+        Toggle(
+          isOn: Binding(
+            get: { mlxService.autoLoadLastModel },
+            set: { mlxService.autoLoadLastModel = $0 }
+          )
+        ) {
+          VStack(alignment: .leading, spacing: 2) {
+            Text("settings.mlx.autoload")
+              .font(.callout)
+            Text("settings.mlx.autoload.hint")
+              .font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
+        .disabled(!mlxService.isAvailable)
       }
 
       Section(String(localized: "settings.mlx.section.models")) {

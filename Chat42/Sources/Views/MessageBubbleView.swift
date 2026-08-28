@@ -8,6 +8,9 @@ struct MessageBubbleView: View {
   /// Only the newest assistant turn can be regenerated — re-running an earlier one
   /// would have to discard everything after it, which is what editing is for.
   let canRegenerate: Bool
+  /// Set when this bubble is one column of a side-by-side comparison, where the
+  /// avatar and full width would only get in the way.
+  var isComparisonColumn: Bool = false
 
   @State private var isCopied = false
   @State private var isEditing = false
@@ -48,18 +51,24 @@ struct MessageBubbleView: View {
   // MARK: - Chat bubble row
 
   private var bubbleRow: some View {
-    HStack(alignment: .bottom, spacing: 8) {
-      if isUser {
-        Spacer(minLength: 60)
+    Group {
+      if isComparisonColumn {
         bubbleContent
-        userAvatar
       } else {
-        assistantAvatar
-        bubbleContent
-        Spacer(minLength: 60)
+        HStack(alignment: .bottom, spacing: 8) {
+          if isUser {
+            Spacer(minLength: 60)
+            bubbleContent
+            userAvatar
+          } else {
+            assistantAvatar
+            bubbleContent
+            Spacer(minLength: 60)
+          }
+        }
+        .padding(.horizontal, 16)
       }
     }
-    .padding(.horizontal, 16)
     .contextMenu { messageContextMenu }
   }
 
@@ -77,6 +86,14 @@ struct MessageBubbleView: View {
     if !isUser && canRegenerate && !conversation.isSending {
       Button(String(localized: "message.regenerate")) {
         state.regenerate(in: conversation)
+      }
+      let alternatives = state.availableModels.filter { $0 != message.modelRef }
+      if !alternatives.isEmpty {
+        Menu(String(localized: "message.retry_with")) {
+          ForEach(alternatives) { ref in
+            Button(ref.fullLabel) { state.retry(in: conversation, using: ref) }
+          }
+        }
       }
     }
     Divider()
@@ -193,6 +210,14 @@ struct MessageBubbleView: View {
       Text(message.timestamp.formatted(date: .omitted, time: .shortened))
         .font(.caption2)
         .foregroundStyle(.tertiary)
+
+      if !isUser, let ref = message.modelRef {
+        Text(ref.shortLabel)
+          .font(.caption2)
+          .foregroundStyle(.tertiary)
+          .lineLimit(1)
+          .help(ref.fullLabel)
+      }
 
       if !isUser && !message.content.isEmpty {
         Button {

@@ -63,6 +63,21 @@ final class MLXService: ChatBackend {
 
   private(set) var modelURLs: [String: URL] = [:]
   private static let urlsDefaultsKey = "mlx.downloadedModelURLs"
+  private static let lastLoadedKey = "mlx.lastLoadedModelId"
+  private static let autoLoadKey = "mlx.autoLoadLastModel"
+
+  /// Whether to restore the last loaded model at launch.
+  ///
+  /// Defaults to on: without it, every launch began with no model loaded and a trip
+  /// through Settings before the local backend could answer anything. It is a
+  /// preference rather than unconditional because loading pulls gigabytes into
+  /// memory, which not everyone wants on every launch.
+  var autoLoadLastModel: Bool {
+    didSet { UserDefaults.standard.set(autoLoadLastModel, forKey: Self.autoLoadKey) }
+  }
+
+  /// The model to restore, if any. Read once at launch by `autoLoadIfEnabled()`.
+  private(set) var lastLoadedModelId: String?
 
   /// In-flight downloads, so a multi-gigabyte pull started by mistake can be
   /// stopped without quitting the app.
@@ -73,7 +88,27 @@ final class MLXService: ChatBackend {
   #endif
 
   private init() {
+    // `object(forKey:)` rather than `bool(forKey:)` so an unset preference reads as
+    // the default rather than as false.
+    autoLoadLastModel =
+      (UserDefaults.standard.object(forKey: Self.autoLoadKey) as? Bool) ?? true
+    lastLoadedModelId = UserDefaults.standard.string(forKey: Self.lastLoadedKey)
     restoreDownloadedModels()
+  }
+
+  /// Reloads the model that was in use when the app last quit.
+  ///
+  /// Called once at launch. Silent on failure: a model that has since been deleted
+  /// or a weights file that no longer parses should leave the app usable, not raise
+  /// an alert before the window is even on screen.
+  func autoLoadIfEnabled() async {
+    guard autoLoadLastModel,
+      isAvailable,
+      loadedModelId == nil,
+      let repoId = lastLoadedModelId,
+      isDownloaded(repoId: repoId)
+    else { return }
+    try? await loadModel(repoId: repoId)
   }
 
   // MARK: - Availability
@@ -305,6 +340,10 @@ final class MLXService: ChatBackend {
     modelURLs.removeValue(forKey: repoId)
     downloadStates[repoId] = .notDownloaded
     removePersisted(for: repoId)
+    if lastLoadedModelId == repoId {
+      lastLoadedModelId = nil
+      UserDefaults.standard.removeObject(forKey: Self.lastLoadedKey)
+    }
     if loadedModelId == repoId { unloadModel() }
   }
 
@@ -331,6 +370,8 @@ final class MLXService: ChatBackend {
         }
         container = loaded
         loadedModelId = repoId
+        lastLoadedModelId = repoId
+        UserDefaults.standard.set(repoId, forKey: Self.lastLoadedKey)
         loadStatus = String(localized: "mlx.status.ready")
       } catch {
         loadStatus = ""

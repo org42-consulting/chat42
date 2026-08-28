@@ -34,10 +34,20 @@ final class Message: Identifiable, Hashable {
   /// relaunch, where the chips remain and the pixels are gone.
   var imageDataURIs: [String]
 
+  /// Which model produced this reply. Recorded per message rather than per
+  /// conversation, because comparison and "retry with a different model" both put
+  /// answers from different models in the same transcript.
+  var modelRef: ModelRef?
+
+  /// Assistant replies sharing a group id answered the same question on different
+  /// models, and are rendered as columns side by side.
+  var comparisonGroupId: UUID?
+
   init(
     id: UUID = UUID(), role: MessageRole, content: String, isStreaming: Bool = false,
     timestamp: Date = .now, attachments: [MessageAttachment] = [], isError: Bool = false,
-    contextText: String = "", imageDataURIs: [String] = []
+    contextText: String = "", imageDataURIs: [String] = [],
+    modelRef: ModelRef? = nil, comparisonGroupId: UUID? = nil
   ) {
     self.id = id
     self.role = role
@@ -48,6 +58,8 @@ final class Message: Identifiable, Hashable {
     self.isError = isError
     self.contextText = contextText
     self.imageDataURIs = imageDataURIs
+    self.modelRef = modelRef
+    self.comparisonGroupId = comparisonGroupId
   }
 
   /// `content` split into prose and code blocks, with prose pre-rendered.
@@ -98,6 +110,8 @@ struct MessageDTO: Codable {
   let attachments: [MessageAttachment]
   let isError: Bool
   let contextText: String
+  let modelRef: ModelRef?
+  let comparisonGroupId: UUID?
 
   init(message: Message) {
     id = message.id
@@ -107,6 +121,8 @@ struct MessageDTO: Codable {
     attachments = message.attachments
     isError = message.isError
     contextText = message.contextText
+    modelRef = message.modelRef
+    comparisonGroupId = message.comparisonGroupId
   }
 
   init(from decoder: Decoder) throws {
@@ -119,15 +135,19 @@ struct MessageDTO: Codable {
     isError = (try? c.decode(Bool.self, forKey: .isError)) ?? false
     // Absent in conversations written before attachment text was replayed.
     contextText = (try? c.decode(String.self, forKey: .contextText)) ?? ""
+    modelRef = try? c.decode(ModelRef.self, forKey: .modelRef)
+    comparisonGroupId = try? c.decode(UUID.self, forKey: .comparisonGroupId)
   }
 
   enum CodingKeys: String, CodingKey {
     case id, role, content, timestamp, attachments, isError, contextText
+    case modelRef, comparisonGroupId
   }
 
   func toMessage() -> Message {
     Message(
       id: id, role: role, content: content, timestamp: timestamp, attachments: attachments,
-      isError: isError, contextText: contextText)
+      isError: isError, contextText: contextText,
+      modelRef: modelRef, comparisonGroupId: comparisonGroupId)
   }
 }

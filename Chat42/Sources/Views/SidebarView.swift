@@ -5,12 +5,14 @@ struct SidebarView: View {
   @State private var searchText = ""
   @State private var renamingId: UUID?
   @State private var renameText = ""
+  @FocusState private var isSearchFocused: Bool
 
+  /// Most recently active first, filtered by a search that reads the whole
+  /// transcript — not just the title, which was the only thing it used to match.
   var filteredConversations: [Conversation] {
-    guard !searchText.isEmpty else { return state.conversations }
-    return state.conversations.filter {
-      $0.displayTitle.localizedCaseInsensitiveContains(searchText)
-    }
+    let ordered = state.conversationsByRecency
+    guard !searchText.isEmpty else { return ordered }
+    return ordered.filter { $0.matches(searchText) }
   }
 
   var body: some View {
@@ -23,6 +25,7 @@ struct SidebarView: View {
         TextField(String(localized: "sidebar.search.placeholder"), text: $searchText)
           .textFieldStyle(.plain)
           .font(.callout)
+          .focused($isSearchFocused)
           .accessibilityLabel(Text("sidebar.search.placeholder"))
         if !searchText.isEmpty {
           Button {
@@ -55,6 +58,7 @@ struct SidebarView: View {
       sidebarFooter
     }
     .background(Color.sidebarBackground)
+    .onChange(of: state.searchFocusRequest) { isSearchFocused = true }
   }
 
   // MARK: - Header
@@ -138,10 +142,36 @@ struct SidebarView: View {
             Image(systemName: conv.backend.systemImage)
               .font(.caption2)
               .foregroundStyle(.tertiary)
+              .accessibilityHidden(true)
             Text(conv.modelName.isEmpty ? "—" : conv.modelName)
               .font(.caption)
               .foregroundStyle(.secondary)
               .lineLimit(1)
+            if let preset = state.preset(id: conv.presetId) {
+              Text(preset.displayName)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 1)
+                .background(Color.primary.opacity(0.07), in: Capsule())
+                .lineLimit(1)
+            }
+            if !conv.pinnedDocuments.isEmpty {
+              Label("\(conv.pinnedDocuments.count)", systemImage: "paperclip")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .labelStyle(.titleAndIcon)
+            }
+          }
+          // When the hit was in the body rather than the title, show where.
+          if !searchText.isEmpty,
+            !conv.displayTitle.localizedCaseInsensitiveContains(searchText),
+            let snippet = conv.snippet(matching: searchText)
+          {
+            Text(snippet)
+              .font(.caption2)
+              .foregroundStyle(.tertiary)
+              .lineLimit(2)
           }
         }
         Spacer()

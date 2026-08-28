@@ -51,7 +51,7 @@ grep -rhoE '"[a-z][a-z0-9_]*(\.[a-z0-9_]+)+"' "${SOURCES}" \
 
 # Only consider references that look like our namespaces, so file names, URLs, and
 # MIME types do not produce noise.
-grep -E '^(alert|attachment|chat|code|default|error|export|image|input|menu|message|mlx|model|settings|sidebar)\.' \
+grep -E '^(alert|attachment|chat|code|default|error|export|image|input|menu|message|mlx|model|preset|quick|service|settings|sidebar)\.' \
     "${tmp}/referenced.txt" >"${tmp}/candidates.txt" || true
 
 missing="$(comm -23 "${tmp}/candidates.txt" "${tmp}/en.txt" || true)"

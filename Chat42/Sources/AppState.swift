@@ -31,13 +31,59 @@ final class AppState {
     conversations.first { $0.id == selectedConversationId }
   }
 
+  /// Conversations in the order the sidebar shows them: most recently active first.
+  ///
+  /// Sorting on `updatedAt` rather than insertion order — the field was already
+  /// maintained and persisted but never read, so a chat replied to minutes ago sank
+  /// below ones abandoned weeks earlier.
+  var conversationsByRecency: [Conversation] {
+    Conversation.byRecency(conversations)
+  }
+
+  // MARK: - Prompt presets
+  var presets: [PromptPreset] = []
+
+  func preset(id: UUID?) -> PromptPreset? {
+    guard let id else { return nil }
+    return presets.first { $0.id == id }
+  }
+
+  func savePreset(_ preset: PromptPreset) {
+    if let index = presets.firstIndex(where: { $0.id == preset.id }) {
+      presets[index] = preset
+    } else {
+      presets.append(preset)
+    }
+    PresetStore.save(presets)
+  }
+
+  func deletePreset(_ preset: PromptPreset) {
+    presets.removeAll { $0.id == preset.id }
+    PresetStore.save(presets)
+  }
+
+  // MARK: - Focus requests
+  //
+  // Menu commands live in the App scene and cannot reach a view's `@FocusState`
+  // directly. Bumping a counter the view observes is the smallest bridge that does
+  // not leak view state upward.
+  var searchFocusRequest = 0
+  var composerFocusRequest = 0
+
   // MARK: - Models
   var ollamaModels: [OllamaModelInfo] = []
   var selectedOllamaModel: OllamaModelInfo?
   var selectedMLXModel: MLXModelInfo?
   var gatewayModels: [GatewayModelInfo] = []
   var selectedGatewayModel: GatewayModelInfo?
-  var activeBackend: AIBackend = .ollama
+  /// Persisted, so the app reopens on the backend that was last in use rather than
+  /// always resetting to Ollama.
+  var activeBackend: AIBackend = .ollama {
+    didSet {
+      guard activeBackend != oldValue else { return }
+      UserDefaults.standard.set(activeBackend.rawValue, forKey: DefaultsKey.activeBackend)
+    }
+  }
 
   var selectedModelName: String {
     switch activeBackend {
@@ -70,6 +116,8 @@ final class AppState {
     static let gatewayBaseURL = "gatewayBaseURL"
     static let gatewayAPIKey = "gatewayAPIKey"
     static let contextTokenLimit = "contextTokenLimit"
+    static let activeBackend = "activeBackend"
+    static let gatewayPricePerMillion = "gatewayPricePerMillion"
   }
 
   static let defaultOllamaBaseURL = "http://localhost:11434"
@@ -83,6 +131,11 @@ final class AppState {
   var contextTokenLimit: Int = AppState.defaultContextTokenLimit
 
   var gatewayBaseURL: String = ""
+
+  /// Price per million tokens for the gateway, in whatever currency the user
+  /// thinks in. Zero means "unset", and the cost readout stays hidden rather than
+  /// inventing a number — pricing is per-model, per-provider, and changes.
+  var gatewayPricePerMillion: Double = 0
 
   // MARK: - Services
   let ollamaService: OllamaService
@@ -106,6 +159,13 @@ final class AppState {
     gatewayBaseURL = savedGatewayURL
     contextTokenLimit = savedContextLimit
     temperature = (defaults.object(forKey: DefaultsKey.temperature) as? Double) ?? temperature
+    gatewayPricePerMillion =
+      (defaults.object(forKey: DefaultsKey.gatewayPricePerMillion) as? Double) ?? 0
+    if let raw = defaults.string(forKey: DefaultsKey.activeBackend),
+      let restored = AIBackend(rawValue: raw)
+    {
+      activeBackend = restored
+    }
     // Distinguish "never set" from "deliberately cleared" — an empty system prompt
     // is a valid choice and must not fall back to the default text.
     if let savedPrompt = defaults.string(forKey: DefaultsKey.systemPrompt) {
@@ -113,23 +173,59 @@ final class AppState {
     }
 
     loadPersistedConversations()
+    loadPresets()
+  }
+
+  /// Seeds a small starter set once, so the feature is discoverable, while still
+  /// letting someone who deletes them all keep an empty list.
+  private func loadPresets() {
+    presets = PresetStore.load()
+    if presets.isEmpty && !PresetStore.hasSeeded {
+      presets = PromptPreset.starters
+      PresetStore.save(presets)
+    }
+    PresetStore.hasSeeded = true
   }
 
   // MARK: - Conversation management
 
   @discardableResult
-  func newConversation() -> Conversation {
+  func newConversation(preset: PromptPreset? = nil) -> Conversation {
+    // A preset can pin where it runs. Applied before the conversation records its
+    // model, so the transcript names the model that will actually serve it.
+    if let preset {
+      if let backend = preset.backend { activeBackend = backend }
+      if let modelName = preset.modelName { selectModel(named: modelName) }
+      if let temperature = preset.temperature { self.temperature = temperature }
+    }
+
     let conv = Conversation(
       modelName: selectedModelName,
-      backend: activeBackend
+      backend: activeBackend,
+      presetId: preset?.id
     )
-    if !systemPrompt.isEmpty {
-      conv.messages.append(Message(role: .system, content: systemPrompt))
+    let instructions = preset?.systemPrompt ?? systemPrompt
+    if !instructions.isEmpty {
+      conv.messages.append(Message(role: .system, content: instructions))
     }
     conversations.insert(conv, at: 0)
     selectedConversationId = conv.id
     scheduleSave()
     return conv
+  }
+
+  /// Selects a model by name on the active backend, if it is available.
+  private func selectModel(named name: String) {
+    switch activeBackend {
+    case .ollama:
+      if let match = ollamaModels.first(where: { $0.name == name }) { selectedOllamaModel = match }
+    case .gateway:
+      if let match = gatewayModels.first(where: { $0.id == name }) { selectedGatewayModel = match }
+    case .mlx:
+      if let match = MLXModelInfo.bundled.first(where: { $0.repoId == name || $0.name == name }) {
+        selectedMLXModel = match
+      }
+    }
   }
 
   func deleteConversation(_ conversation: Conversation) {
@@ -379,41 +475,108 @@ final class AppState {
 
   /// Runs one model turn against whatever `conversation.messages` currently ends
   /// with. Used by the initial send, by regenerate, and by edit-and-resend.
-  private func runTurn(in conversation: Conversation) async {
+  ///
+  /// `override` names a model explicitly — "retry with a different model" — instead
+  /// of using whatever is selected right now.
+  private func runTurn(in conversation: Conversation, using override: ModelRef? = nil) async {
+    let primary: ModelRef
+    do {
+      primary = try override ?? currentModelRef()
+    } catch {
+      appendError(error.localizedDescription, to: conversation)
+      return
+    }
+
+    // Context is built before the placeholders are appended, so both columns of a
+    // comparison see exactly the same question.
+    let context = ContextBuilder.build(
+      from: conversation.messages,
+      pinned: conversation.pinnedDocuments,
+      excluding: nil,
+      tokenLimit: contextTokenLimit
+    )
+
+    // A comparison runs the same context on two models concurrently. An explicit
+    // override means the user asked for one specific model, so it wins.
+    if override == nil, let secondary = conversation.compareWith, secondary != primary {
+      await runComparison(
+        in: conversation, context: context, primary: primary, secondary: secondary)
+      return
+    }
+
     // Record what actually served this turn. The values captured at creation time
     // are stale whenever the model list had not loaded yet, or the user switched.
-    conversation.modelName = selectedModelName
-    conversation.backend = activeBackend
+    conversation.modelName = primary.model
+    conversation.backend = primary.backend
 
-    let assistantMessage = Message(role: .assistant, content: "", isStreaming: true)
+    let assistantMessage = Message(
+      role: .assistant, content: "", isStreaming: true, modelRef: primary)
     conversation.messages.append(assistantMessage)
-    defer { assistantMessage.isStreaming = false }
+    await stream(into: assistantMessage, using: primary, context: context, in: conversation)
+    conversation.updatedAt = .now
+  }
+
+  /// Answers one question on two models at once, tagging both replies with a shared
+  /// group id so the transcript can render them as columns.
+  private func runComparison(
+    in conversation: Conversation, context: [ChatMessage],
+    primary: ModelRef, secondary: ModelRef
+  ) async {
+    let groupId = UUID()
+    let left = Message(
+      role: .assistant, content: "", isStreaming: true,
+      modelRef: primary, comparisonGroupId: groupId)
+    let right = Message(
+      role: .assistant, content: "", isStreaming: true,
+      modelRef: secondary, comparisonGroupId: groupId)
+    conversation.messages.append(left)
+    conversation.messages.append(right)
+
+    conversation.modelName = primary.model
+    conversation.backend = primary.backend
+
+    // Concurrently, not sequentially: waiting for a local model to finish before
+    // starting the remote one would double the time to see both answers.
+    //
+    // Two main-actor `Task`s rather than `async let`. Both replies are non-Sendable
+    // `Message` objects owned by the main actor, and `async let` is treated as
+    // concurrent execution — so it demands they be sent across an isolation
+    // boundary, which they cannot safely be. Staying on the main actor costs
+    // nothing here: the work is waiting on network streams, and the two interleave
+    // at their suspension points.
+    let leftTask = Task { @MainActor in
+      await self.stream(into: left, using: primary, context: context, in: conversation)
+    }
+    let rightTask = Task { @MainActor in
+      await self.stream(into: right, using: secondary, context: context, in: conversation)
+    }
+    _ = await leftTask.value
+    _ = await rightTask.value
+
+    conversation.updatedAt = .now
+  }
+
+  /// Streams one reply into `message`.
+  private func stream(
+    into message: Message, using ref: ModelRef, context: [ChatMessage],
+    in conversation: Conversation
+  ) async {
+    defer { message.isStreaming = false }
 
     do {
       // Image models speak a different endpoint and take no conversation history,
-      // so they bypass the context-building and streaming path entirely.
-      if activeBackend == .gateway, selectedGatewayModel?.isImageGeneration == true {
-        let prompt =
-          conversation.messages
-          .last(where: { $0.role == .user })?.content ?? ""
-        let attachments =
-          conversation.messages
-          .last(where: { $0.role == .user })?.attachments ?? []
+      // so they bypass the streaming path entirely.
+      if ref.backend == .gateway, isImageModel(ref) {
+        let lastUser = conversation.messages.last(where: { $0.role == .user })
         try await generateImage(
-          prompt: prompt, attachmentCount: attachments.count, into: assistantMessage,
-          in: conversation)
+          prompt: lastUser?.content ?? "",
+          attachmentCount: lastUser?.attachments.count ?? 0,
+          into: message, in: conversation)
         return
       }
 
-      let (service, model) = try resolveBackend()
-      let context = ContextBuilder.build(
-        from: conversation.messages,
-        excluding: assistantMessage,
-        tokenLimit: contextTokenLimit
-      )
-
-      let stream = await service.stream(
-        model: model, messages: context, temperature: temperature)
+      let stream = await service(for: ref.backend).stream(
+        model: ref.model, messages: context, temperature: temperature)
 
       // Tokens are batched into ~20 updates a second rather than published one at
       // a time. Each mutation of `content` re-evaluates the bubble and re-runs the
@@ -423,7 +586,7 @@ final class AppState {
       var lastFlush = ContinuousClock.now
       func flush() {
         guard !pending.isEmpty else { return }
-        assistantMessage.content += pending
+        message.content += pending
         pending = ""
         lastFlush = ContinuousClock.now
       }
@@ -437,26 +600,115 @@ final class AppState {
     } catch is CancellationError {
       // Cancelled by user — keep partial response.
     } catch {
-      assistantMessage.content = String(
+      message.content = String(
         format: String(localized: "error.generic"), error.localizedDescription)
-      assistantMessage.isError = true
+      message.isError = true
     }
   }
 
-  /// Picks the service and model id for the active backend.
-  private func resolveBackend() throws -> (ChatBackend, String) {
+  /// The model the current selection resolves to.
+  private func currentModelRef() throws -> ModelRef {
     switch activeBackend {
     case .ollama:
       guard let model = selectedOllamaModel else { throw SendError.noModel(.ollama) }
-      return (ollamaService, model.name)
+      return ModelRef(backend: .ollama, model: model.name)
     case .mlx:
-      let mlx = MLXService.shared
-      guard let loaded = mlx.loadedModelId else { throw SendError.noModel(.mlx) }
-      return (mlx, loaded)
+      guard let loaded = MLXService.shared.loadedModelId else { throw SendError.noModel(.mlx) }
+      return ModelRef(backend: .mlx, model: loaded)
     case .gateway:
       guard let model = selectedGatewayModel else { throw SendError.noModel(.gateway) }
-      return (gatewayService, model.id)
+      return ModelRef(backend: .gateway, model: model.id)
     }
+  }
+
+  private func service(for backend: AIBackend) -> ChatBackend {
+    switch backend {
+    case .ollama: return ollamaService
+    case .mlx: return MLXService.shared
+    case .gateway: return gatewayService
+    }
+  }
+
+  private func isImageModel(_ ref: ModelRef) -> Bool {
+    guard ref.backend == .gateway else { return false }
+    return gatewayModels.first { $0.id == ref.model }?.isImageGeneration ?? false
+  }
+
+  /// Every model that could serve a turn right now, for the comparison and
+  /// "retry with" pickers. Image models are excluded — they answer a prompt with a
+  /// picture, which is not a comparable reply.
+  var availableModels: [ModelRef] {
+    var refs = ollamaModels.map { ModelRef(backend: .ollama, model: $0.name) }
+    if let loaded = MLXService.shared.loadedModelId {
+      refs.append(ModelRef(backend: .mlx, model: loaded))
+    }
+    refs +=
+      gatewayModels
+      .filter { !$0.isImageGeneration }
+      .map { ModelRef(backend: .gateway, model: $0.id) }
+    return refs
+  }
+
+  // MARK: - Retry and comparison
+
+  /// Re-asks the last question on a specific model, keeping the previous reply.
+  func retry(in conversation: Conversation, using ref: ModelRef) {
+    guard !conversation.isSending else { return }
+    // Trailing assistant turns are dropped so the retry answers the same question,
+    // rather than being read as a reply to the previous answer.
+    while let last = conversation.messages.last, last.role == .assistant {
+      discardStoredImages(in: [last])
+      conversation.messages.removeLast()
+    }
+    guard conversation.messages.last?.role == .user else { return }
+    beginTurn(in: conversation) { [weak self] in
+      await self?.runTurn(in: conversation, using: ref)
+    }
+  }
+
+  func setComparison(_ ref: ModelRef?, in conversation: Conversation) {
+    conversation.compareWith = ref
+    scheduleSave()
+  }
+
+  // MARK: - Pinned documents
+
+  func pinDocument(_ file: AttachedFile, to conversation: Conversation) throws {
+    let (text, images) = try AttachmentProcessor.process([file])
+    // An image has no text to pin; there is nothing to keep in context for it.
+    guard images.isEmpty, !text.isEmpty else {
+      throw AttachmentProcessingError.unsupportedType(file.name)
+    }
+    conversation.pinnedDocuments.append(
+      PinnedDocument(name: file.name, text: text, byteCount: file.data.count))
+    scheduleSave()
+  }
+
+  func unpinDocument(_ document: PinnedDocument, from conversation: Conversation) {
+    conversation.pinnedDocuments.removeAll { $0.id == document.id }
+    scheduleSave()
+  }
+
+  // MARK: - Context usage
+
+  func contextUsage(for conversation: Conversation)
+    -> (used: Int, limit: Int, isTrimming: Bool)
+  {
+    ContextBuilder.usage(for: conversation, tokenLimit: contextTokenLimit)
+  }
+
+  /// Estimated spend for a conversation, or nil when no price is configured.
+  ///
+  /// Deliberately nil rather than zero when unset: gateway pricing is per-model and
+  /// changes, so the app has no basis to guess one and showing a made-up number
+  /// would be worse than showing none.
+  func estimatedCost(for conversation: Conversation) -> String? {
+    guard gatewayPricePerMillion > 0, conversation.backend == .gateway else { return nil }
+    let tokens = conversation.messages.reduce(0) {
+      $0 + ContextBuilder.estimatedTokens($1.contextContent)
+    }
+    let cost = Double(tokens) / 1_000_000 * gatewayPricePerMillion
+    return String(format: "%.3f", cost)
   }
 
   private func appendError(_ message: String, to conversation: Conversation) {
@@ -530,6 +782,7 @@ final class AppState {
     defaults.set(temperature, forKey: DefaultsKey.temperature)
     defaults.set(systemPrompt, forKey: DefaultsKey.systemPrompt)
     defaults.set(contextTokenLimit, forKey: DefaultsKey.contextTokenLimit)
+    defaults.set(gatewayPricePerMillion, forKey: DefaultsKey.gatewayPricePerMillion)
 
     await ollamaService.updateBaseURL(ollamaBaseURL)
     await ollamaService.updateContextTokenLimit(contextTokenLimit)

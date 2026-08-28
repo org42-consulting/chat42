@@ -39,11 +39,12 @@ struct ChatInputView: View {
       .padding(.horizontal, 16)
       .padding(.vertical, 12)
 
-      HStack {
+      HStack(spacing: 10) {
         Text("input.hint")
           .font(.caption2)
           .foregroundStyle(.tertiary)
         Spacer()
+        contextMeter
         if let label = selectedModelLabel {
           Text(label)
             .font(.caption2)
@@ -69,6 +70,55 @@ struct ChatInputView: View {
       return !providers.isEmpty
     }
     .onAppear { isFocused = true }
+  }
+
+  /// How much of the context budget the next request will use.
+  ///
+  /// Without this, history trimming was invisible: turns started dropping out of
+  /// context with nothing on screen to say so. Turns amber once trimming begins.
+  @ViewBuilder
+  private var contextMeter: some View {
+    let usage = state.contextUsage(for: conversation)
+    let fraction = usage.limit > 0 ? min(Double(usage.used) / Double(usage.limit), 1) : 0
+
+    HStack(spacing: 5) {
+      Capsule()
+        .fill(Color.primary.opacity(0.12))
+        .frame(width: 40, height: 4)
+        .overlay(alignment: .leading) {
+          Capsule()
+            .fill(usage.isTrimming ? Color.orange : Color.accentColor.opacity(0.7))
+            .frame(width: 40 * fraction, height: 4)
+        }
+        .accessibilityHidden(true)
+
+      Text(compactTokens(usage.used) + " / " + compactTokens(usage.limit))
+        .font(.caption2)
+        .monospacedDigit()
+        .foregroundStyle(usage.isTrimming ? Color.orange : Color.secondary.opacity(0.7))
+
+      if let cost = state.estimatedCost(for: conversation) {
+        Text(verbatim: "~\(cost)")
+          .font(.caption2)
+          .monospacedDigit()
+          .foregroundStyle(.tertiary)
+          .help(String(localized: "chat.cost.help"))
+      }
+    }
+    .help(
+      usage.isTrimming
+        ? String(localized: "chat.context.trimming")
+        : String(localized: "chat.context.help")
+    )
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      Text(
+        String(
+          format: String(localized: "chat.context.usage"), usage.used, usage.limit)))
+  }
+
+  private func compactTokens(_ count: Int) -> String {
+    count >= 1000 ? "\(count / 1000)K" : "\(count)"
   }
 
   // MARK: - Input field

@@ -35,6 +35,7 @@ enum ContextBuilder {
   /// trimmed down to no question at all is worse than one that overruns.
   static func build(
     from messages: [Message],
+    pinned: [PinnedDocument] = [],
     excluding placeholder: Message?,
     tokenLimit: Int
   ) -> [ChatMessage] {
@@ -51,7 +52,15 @@ enum ContextBuilder {
     let system = eligible.filter { $0.role == .system }
     let turns = eligible.filter { $0.role != .system }
 
-    var remaining = tokenLimit - system.reduce(0) { $0 + estimatedTokens($1.contextContent) }
+    // Pinned documents are the subject of the conversation, not a past turn, so
+    // they sit with the instructions and are never trimmed away. They are also
+    // charged against the budget, which is what makes the meter honest about how
+    // little room a large pinned file leaves.
+    let pinnedBlock = pinned.isEmpty ? nil : pinned.map(\.contextBlock).joined(separator: "\n\n")
+    let pinnedCost = pinnedBlock.map(estimatedTokens) ?? 0
+
+    var remaining =
+      tokenLimit - pinnedCost - system.reduce(0) { $0 + estimatedTokens($1.contextContent) }
     var kept: [Message] = []
     for message in turns.reversed() {
       let cost = estimatedTokens(message.contextContent)
@@ -60,12 +69,46 @@ enum ContextBuilder {
       remaining -= cost
     }
 
-    return (system + kept.reversed()).map { message in
+    var built = (system + kept.reversed()).map { message in
       ChatMessage(
         role: message.role,
         content: message.contextContent,
         images: message.imageDataURIs.isEmpty ? nil : message.imageDataURIs
       )
     }
+
+    if let pinnedBlock {
+      // After the instructions, before the transcript.
+      let insertAt = built.prefix { $0.role == .system }.count
+      built.insert(ChatMessage(role: .system, content: pinnedBlock), at: insertAt)
+    }
+    return built
+  }
+
+  /// What the next request would cost, against the budget it has to fit.
+  ///
+  /// Computed by building the context that would actually be sent, so the number
+  /// shown to the user is the number that gets trimmed — not a separate estimate
+  /// that can drift from it.
+  static func usage(
+    for conversation: Conversation,
+    tokenLimit: Int
+  ) -> (used: Int, limit: Int, isTrimming: Bool) {
+    let context = build(
+      from: conversation.messages,
+      pinned: conversation.pinnedDocuments,
+      excluding: nil,
+      tokenLimit: tokenLimit
+    )
+    let used = estimatedTokens(of: context)
+
+    // Trimming is happening when the untrimmed transcript would not have fit.
+    let everything =
+      conversation.messages
+      .filter { !$0.isError && !($0.role == .assistant && $0.content.isEmpty) }
+      .reduce(0) { $0 + estimatedTokens($1.contextContent) }
+      + conversation.pinnedDocuments.reduce(0) { $0 + estimatedTokens($1.contextBlock) }
+
+    return (used, tokenLimit, everything > tokenLimit)
   }
 }
