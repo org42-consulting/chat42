@@ -106,6 +106,7 @@
 "settings.mlx.load_button" = "Laden";
 "settings.mlx.unload_button" = "Huidig model verwijderen";
 "settings.mlx.download_button" = "Downloaden";
+"settings.mlx.size_approx" = "~%@ te downloaden";
 "settings.mlx.retry_button" = "Opnieuw proberen";
 "settings.mlx.delete_help" = "Model van schijf verwijderen";
 
@@ -137,11 +138,22 @@
 "error.ollama.decoding" = "Decodeersfout: %@";
 
 /* MLX model descriptions */
+"mlx.model.qwen3_06b.desc" = "Zeer klein 0,6B-model. Snelst te laden, basiskwaliteit";
 "mlx.model.llama_1b.desc" = "Snel 1B-parametermodel, uitstekend voor snelle antwoorden";
 "mlx.model.llama_3b.desc" = "Gebalanceerd 3B-model met goede kwaliteit";
+"mlx.model.qwen3_4b.desc" = "Capabel 4B-model, sterk voor zijn formaat";
+"mlx.model.gemma3_4b.desc" = "Google's 4B-model, kwantisatiebewust getraind";
 "mlx.model.mistral_7b.desc" = "Hoogwaardig 7B-instructiemodel";
-"mlx.model.phi35.desc" = "Microsoft's efficiënt klein taalmodel";
-"mlx.model.gemma_2b.desc" = "Google's compact instructiemodel";
+"mlx.model.qwen25_coder_7b.desc" = "7B-model afgestemd op code";
+"mlx.model.qwen3_8b.desc" = "8B-model met uitstekende kwaliteit";
+"mlx.model.gemma3_12b.desc" = "Google's 12B-model, kwantisatiebewust getraind";
+"mlx.model.qwen3_14b.desc" = "14B-model met sterke algemene kwaliteit";
+"mlx.model.gpt_oss_20b.desc" = "OpenAI's 20B-reasoningmodel met open gewichten";
+"mlx.model.gemma3_27b.desc" = "Google's 27B-model, kwantisatiebewust getraind";
+"mlx.model.qwen3_30b_a3b.desc" = "30B mixture-of-experts, snel voor zijn formaat";
+"mlx.model.qwen3_coder_30b.desc" = "30B mixture-of-experts afgestemd op code";
+"mlx.model.r1_distill_32b.desc" = "32B-reasoningmodel gedistilleerd uit DeepSeek R1";
+"mlx.model.llama33_70b.desc" = "Meta's 70B-model. Vereist veel geheugen";
 
 /* Defaults */
 "default.no_model" = "Geen model";
@@ -228,12 +240,6 @@
 /* Toegevoegd: contextbudget */
 "settings.general.context.label" = "Contextgrootte";
 "settings.general.context.hint" = "Hoeveel geschiedenis wordt meegestuurd. Oudere beurten vervallen hierboven; bepaalt ook num_ctx van Ollama.";
-"mlx.model.llama31_8b.desc" = "8B-model met uitstekende kwaliteit";
-"mlx.model.llama31_70b.desc" = "Groot 70B-model met hoge kwaliteit";
-"mlx.model.qwen2_7b.desc" = "Instructiemodel van hoge kwaliteit van Alibaba";
-"mlx.model.llama3_8b.desc" = "8B-instructiemodel van Meta";
-"mlx.model.llama3_70b.desc" = "70B-instructiemodel van Meta";
-"mlx.model.phi3_medium.desc" = "Middelgroot taalmodel van Microsoft";
 
 
 /* Toegevoegd: promptsjablonen */

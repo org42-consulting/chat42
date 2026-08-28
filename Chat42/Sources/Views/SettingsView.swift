@@ -578,12 +578,21 @@ struct SettingsView: View {
         Text(model.description)
           .font(.caption)
           .foregroundStyle(.secondary)
-        if case .downloaded = downloadState,
-          let size = mlxService.formattedDiskSize(for: model.repoId)
-        {
-          Text(size)
-            .font(.caption2)
-            .foregroundStyle(.tertiary)
+        if case .downloaded = downloadState {
+          if let size = mlxService.formattedDiskSize(for: model.repoId) {
+            Text(size)
+              .font(.caption2)
+              .foregroundStyle(.tertiary)
+          }
+        } else {
+          // Before the pull, the estimate is the only size cue the row can offer.
+          Text(
+            String(
+              format: String(localized: "settings.mlx.size_approx"),
+              model.formattedApproximateSize)
+          )
+          .font(.caption2)
+          .foregroundStyle(.tertiary)
         }
         if case .failed(let msg) = downloadState {
           Text(msg)

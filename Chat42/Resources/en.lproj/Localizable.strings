@@ -106,6 +106,7 @@
 "settings.mlx.load_button" = "Load";
 "settings.mlx.unload_button" = "Unload Current Model";
 "settings.mlx.download_button" = "Download";
+"settings.mlx.size_approx" = "~%@ to download";
 "settings.mlx.retry_button" = "Retry";
 "settings.mlx.delete_help" = "Delete model from disk";
 
@@ -136,12 +137,24 @@
 "error.ollama.api_error" = "Ollama error: %@";
 "error.ollama.decoding" = "Decoding error: %@";
 
-/* MLX model descriptions */
+/* MLX model descriptions. Size is rendered from MLXModelInfo.approximateSizeGB,
+   so keep it out of the prose here. */
+"mlx.model.qwen3_06b.desc" = "Tiny 0.6B model. Fastest to load, basic quality";
 "mlx.model.llama_1b.desc" = "Fast 1B parameter model, great for quick responses";
 "mlx.model.llama_3b.desc" = "Balanced 3B model with good quality";
+"mlx.model.qwen3_4b.desc" = "Capable 4B model, strong for its size";
+"mlx.model.gemma3_4b.desc" = "Google's 4B model, quantization-aware trained";
 "mlx.model.mistral_7b.desc" = "High quality 7B instruction model";
-"mlx.model.phi35.desc" = "Microsoft's efficient small language model";
-"mlx.model.gemma_2b.desc" = "Google's compact instruction-tuned model";
+"mlx.model.qwen25_coder_7b.desc" = "7B model tuned for code";
+"mlx.model.qwen3_8b.desc" = "8B model with excellent quality";
+"mlx.model.gemma3_12b.desc" = "Google's 12B model, quantization-aware trained";
+"mlx.model.qwen3_14b.desc" = "14B model with strong all-round quality";
+"mlx.model.gpt_oss_20b.desc" = "OpenAI's open-weight 20B reasoning model";
+"mlx.model.gemma3_27b.desc" = "Google's 27B model, quantization-aware trained";
+"mlx.model.qwen3_30b_a3b.desc" = "30B mixture-of-experts, fast for its size";
+"mlx.model.qwen3_coder_30b.desc" = "30B mixture-of-experts tuned for code";
+"mlx.model.r1_distill_32b.desc" = "32B reasoning model distilled from DeepSeek R1";
+"mlx.model.llama33_70b.desc" = "Meta's 70B model. Needs a lot of memory";
 
 /* Defaults */
 "default.no_model" = "No model";
@@ -228,12 +241,6 @@
 /* Added: context budget */
 "settings.general.context.label" = "Context size";
 "settings.general.context.hint" = "How much history to send. Older turns are dropped past this; also sets Ollama's num_ctx.";
-"mlx.model.llama31_8b.desc" = "8B parameter model with excellent quality";
-"mlx.model.llama31_70b.desc" = "Large 70B parameter model with high quality";
-"mlx.model.qwen2_7b.desc" = "Alibaba's high-quality instruction model";
-"mlx.model.llama3_8b.desc" = "Meta's 8B instruction model";
-"mlx.model.llama3_70b.desc" = "Meta's 70B instruction model";
-"mlx.model.phi3_medium.desc" = "Microsoft's medium-sized language model";
 
 
 /* Added: prompt presets */

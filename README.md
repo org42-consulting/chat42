@@ -84,7 +84,8 @@ Access settings through the gear icon in the sidebar or with ⌘, — both open 
 - **Test Connection**: Verify that the Gateway service is reachable
 
 #### MLX Settings
-- **Model Selection**: Choose from bundled models (Llama 3.2, Mistral, Phi, Gemma, Qwen, etc.)
+- **Model Selection**: Choose from a curated list spanning 0.4 GB to 40 GB (Qwen 3,
+  Llama 3.2/3.3, Gemma 3, Mistral, GPT-OSS, DeepSeek R1 Distill, plus coder variants)
 - **Download**: Download models directly from Hugging Face. A download in progress
   can be cancelled.
 - **Load**: Load a downloaded model for use in conversations
