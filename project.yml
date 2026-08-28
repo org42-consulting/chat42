@@ -25,6 +25,9 @@ targets:
         includes:
           - "Info.plist"
           - "Assets.xcassets"
+          # The Liquid Glass icon. Xcode uses this in place of the AppIcon in
+          # Assets.xcassets, which stays for build.sh's actool-less fallback.
+          - "AppIcon.icon"
           - "PrivacyInfo.xcprivacy"
           - "en.lproj/Localizable.strings"
           - "nl.lproj/Localizable.strings"

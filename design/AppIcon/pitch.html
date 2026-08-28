@@ -1,0 +1,750 @@
+<title>Chat42 App Icon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  :root{
+    --ink:#002D3C; --crimson:#990000; --crimson-lift:#B01414; --cream:#F4F7F5;
+    --mist:#DCEFF3; --mist-deep:#A9CFD9;
+
+    --ground:#F4F8F9;
+    --surface:#FFFFFF;
+    --surface-sunk:#E9F1F3;
+    --text:#0B2B36;
+    --text-soft:#4A6470;
+    --text-faint:#7A929B;
+    --rule:#CBDDE3;
+    --rule-soft:#DFEAED;
+    --accent:var(--crimson);
+    --stage:#06222D;
+    --stage-text:#DCEFF3;
+    --stage-rule:#164657;
+    --good:#1F6B4F;
+    --warn:#8A5A12;
+
+    --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+    --measure:66ch;
+    --pad:clamp(20px,5vw,64px);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#05202B; --surface:#0A2C39; --surface-sunk:#04191F;
+      --text:#DDECF0; --text-soft:#9FBCC5; --text-faint:#6F909B;
+      --rule:#1B4E60; --rule-soft:#123B4A;
+      --accent:#E06A6A; --stage:#03161E; --stage-rule:#164657;
+      --good:#6BC59B; --warn:#D8A557;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#05202B; --surface:#0A2C39; --surface-sunk:#04191F;
+    --text:#DDECF0; --text-soft:#9FBCC5; --text-faint:#6F909B;
+    --rule:#1B4E60; --rule-soft:#123B4A;
+    --accent:#E06A6A; --stage:#03161E; --stage-rule:#164657;
+    --good:#6BC59B; --warn:#D8A557;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ground); color:var(--text);
+    font-family:var(--body); font-size:17px; line-height:1.66;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 var(--pad)}
+  .col{max-width:var(--measure)}
+
+  h1,h2,h3,.eyebrow,.chip,button,th,.num{font-family:var(--display)}
+  h1{
+    font-size:clamp(2.6rem,6vw,4.4rem); font-weight:700; line-height:1.02;
+    letter-spacing:-.03em; margin:0; text-wrap:balance;
+  }
+  h2{
+    font-size:clamp(1.5rem,3vw,2.1rem); font-weight:600; letter-spacing:-.02em;
+    line-height:1.15; margin:0 0 .5rem; text-wrap:balance;
+  }
+  h3{font-size:1.06rem;font-weight:600;letter-spacing:-.01em;margin:0 0 .35rem}
+  p{margin:0 0 1.05rem}
+  a{color:var(--accent)}
+
+  .eyebrow{
+    font-size:.7rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--text-faint); margin:0 0 .9rem;
+  }
+  .lede{font-size:1.2rem;line-height:1.55;color:var(--text-soft)}
+
+  section{padding:clamp(52px,8vw,104px) 0;border-top:1px solid var(--rule-soft)}
+  section:first-of-type{border-top:0}
+  .head{display:flex;flex-direction:column;gap:.15rem;margin-bottom:2.2rem}
+
+  /* ---------- hero stage ---------- */
+  .stage{background:var(--stage);color:var(--stage-text);border-top:0}
+  .stage .eyebrow{color:#5C8B9C}
+  .stage h1{color:#EAF5F7}
+  .stage .lede{color:#A6C6D0}
+  .stagegrid{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);
+    gap:clamp(28px,5vw,68px);align-items:center;
+    padding:clamp(48px,7vw,92px) 0;
+  }
+  @media(max-width:860px){.stagegrid{grid-template-columns:1fr}}
+
+  .canvas{
+    position:relative;display:grid;place-items:center;
+    aspect-ratio:1;width:100%;border-radius:26px;
+    background:
+      linear-gradient(150deg,#0E3446 0%,#0A2A38 60%,#082330 100%);
+    border:1px solid var(--stage-rule);
+    padding:clamp(22px,4vw,44px);
+  }
+  .canvas .icon{width:100%;height:auto;display:block}
+
+  .controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.4rem}
+  .grp{
+    display:flex;background:rgba(255,255,255,.05);
+    border:1px solid var(--stage-rule);border-radius:999px;padding:3px;gap:2px;
+  }
+  .chip{
+    appearance:none;border:0;background:transparent;color:#9FC3CE;cursor:pointer;
+    font-size:.76rem;font-weight:600;letter-spacing:.04em;
+    padding:.42rem .82rem;border-radius:999px;transition:background .15s,color .15s;
+  }
+  .chip:hover{color:#E4F2F5}
+  .chip[aria-pressed="true"]{background:#EAF5F7;color:#06222D}
+  .chip:focus-visible{outline:2px solid #7FC4D8;outline-offset:2px}
+  .ctl-label{
+    font-family:var(--display);font-size:.66rem;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;color:#5C8B9C;align-self:center;margin-right:.15rem;
+  }
+
+  /* ---------- generic blocks ---------- */
+  .cards{display:grid;gap:clamp(16px,2.4vw,26px)}
+  .cols-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+  .card{
+    background:var(--surface);border:1px solid var(--rule-soft);border-radius:14px;
+    padding:clamp(18px,2.4vw,26px);
+  }
+  .card.pick{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tag{
+    display:inline-block;font-family:var(--display);font-size:.64rem;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;padding:.28rem .6rem;border-radius:999px;
+    background:var(--surface-sunk);color:var(--text-soft);margin-bottom:.7rem;
+  }
+  .tag.rec{background:var(--accent);color:#fff}
+
+  .specimen{
+    background:linear-gradient(150deg,var(--mist) 0%,var(--mist-deep) 100%);
+    border-radius:12px;display:grid;place-items:center;padding:clamp(14px,2vw,22px);
+    border:1px solid var(--rule-soft);
+  }
+  .specimen svg{display:block;width:100%;height:auto}
+
+  /* ---------- appearance matrix ---------- */
+  .matrix{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:clamp(14px,2vw,22px)}
+  .cell{display:flex;flex-direction:column;gap:.7rem}
+  .cell .frame{
+    border-radius:14px;padding:clamp(14px,2vw,22px);display:grid;place-items:center;
+    border:1px solid var(--rule-soft);aspect-ratio:1;
+  }
+  .frame.f-default{background:linear-gradient(150deg,#DCEFF3,#A9CFD9)}
+  .frame.f-dark{background:linear-gradient(150deg,#0A2C39,#00161E);border-color:#123B4A}
+  .frame.f-clear,.frame.f-tinted{
+    background:
+      radial-gradient(120% 90% at 20% 15%,#5E7C93 0%,transparent 60%),
+      radial-gradient(100% 80% at 85% 80%,#8A5B6B 0%,transparent 55%),
+      linear-gradient(155deg,#2C3E50,#1B2A38);
+    border-color:#123B4A;
+  }
+  .cap{display:flex;flex-direction:column;gap:.1rem}
+  .cap b{font-family:var(--display);font-size:.86rem;font-weight:600;letter-spacing:-.01em}
+  .cap span{font-size:.8rem;color:var(--text-faint);line-height:1.4}
+
+  /* ---------- size ladder ---------- */
+  .ladder{
+    display:flex;align-items:flex-end;gap:clamp(16px,3.5vw,44px);flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--rule-soft);border-radius:14px;
+    padding:clamp(22px,3.4vw,38px);
+  }
+  .rung{display:flex;flex-direction:column;align-items:center;gap:.6rem}
+  .rung .px{
+    font-family:var(--mono);font-size:.7rem;color:var(--text-faint);
+    font-variant-numeric:tabular-nums;
+  }
+  .rung svg{display:block}
+
+  /* ---------- anatomy ---------- */
+  .stackwrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:clamp(16px,2.4vw,26px)}
+  .layerbox{display:flex;flex-direction:column;gap:.75rem}
+  /* Mid-tone checker: says "this layer ships with no background of its own", and is the
+     one ground where both the crimson fill and the cream numerals stay legible. */
+  .layerbox .specimen{
+    background-color:#41606B; border-color:#2E4A54;
+    background-image:
+      linear-gradient(45deg,rgba(255,255,255,.06) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.06) 75%),
+      linear-gradient(45deg,rgba(255,255,255,.06) 25%,transparent 25%,transparent 75%,rgba(255,255,255,.06) 75%);
+    background-size:26px 26px; background-position:0 0,13px 13px;
+  }
+  .lnum{
+    font-family:var(--mono);font-size:.72rem;color:var(--accent);font-weight:500;
+    letter-spacing:.06em;
+  }
+
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto;border:1px solid var(--rule-soft);border-radius:14px;background:var(--surface)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
+  th,td{text-align:left;padding:.82rem 1rem;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+  th{
+    font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--text-faint);background:var(--surface-sunk);
+  }
+  tr:last-child td{border-bottom:0}
+  td.rule{font-family:var(--display);font-weight:500;font-size:.88rem;width:34%}
+  .yes{color:var(--good);font-weight:600}
+  code,.mono{font-family:var(--mono);font-size:.84em}
+  code{background:var(--surface-sunk);padding:.12em .4em;border-radius:5px}
+
+  /* ---------- swatches ---------- */
+  .swatches{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+  .sw{border:1px solid var(--rule-soft);border-radius:12px;overflow:hidden;background:var(--surface)}
+  .sw .chipc{height:76px}
+  .sw .meta{padding:.7rem .85rem;display:flex;flex-direction:column;gap:.1rem}
+  .sw b{font-family:var(--display);font-size:.84rem;font-weight:600}
+  .sw span{font-family:var(--mono);font-size:.74rem;color:var(--text-faint)}
+
+  .note{
+    border-left:3px solid var(--accent);padding:.1rem 0 .1rem 1.1rem;
+    color:var(--text-soft);font-size:.95rem;
+  }
+  ul.tight{margin:0 0 1.05rem;padding-left:1.15rem}
+  ul.tight li{margin-bottom:.42rem}
+
+  footer{padding:44px 0 72px;color:var(--text-faint);font-size:.86rem;border-top:1px solid var(--rule-soft)}
+
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<!-- ============================ HERO ============================ -->
+<section class="stage">
+  <div class="wrap stagegrid">
+    <div>
+      <p class="eyebrow">Chat42 &middot; icon direction</p>
+      <h1>Forty-two, in a bubble.</h1>
+      <p class="lede" style="max-width:46ch">
+        A ground-up redraw for Apple&rsquo;s Liquid Glass icon system &mdash; built as
+        separate layers the system lights itself, rather than a picture of an icon.
+      </p>
+      <div class="controls" role="group" aria-label="Icon preview controls">
+        <span class="ctl-label">Direction</span>
+        <div class="grp" id="dirCtl">
+          <button class="chip" data-dir="A" aria-pressed="true">A &middot; Answer</button>
+          <button class="chip" data-dir="B" aria-pressed="false">B &middot; Dialogue</button>
+        </div>
+      </div>
+      <div class="controls" role="group" aria-label="Appearance">
+        <span class="ctl-label">Appearance</span>
+        <div class="grp" id="appCtl">
+          <button class="chip" data-app="default" aria-pressed="true">Default</button>
+          <button class="chip" data-app="dark" aria-pressed="false">Dark</button>
+          <button class="chip" data-app="clear" aria-pressed="false">Clear</button>
+          <button class="chip" data-app="tinted" aria-pressed="false">Tinted</button>
+        </div>
+        <div class="grp">
+          <button class="chip" id="gridBtn" aria-pressed="false">Grid</button>
+        </div>
+      </div>
+    </div>
+    <div class="canvas" id="heroCanvas"></div>
+  </div>
+</section>
+
+<!-- ============================ WHY ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">The problem</p>
+      <h2>The current icon is a wordmark, and wordmarks don&rsquo;t survive the transition</h2>
+    </div>
+    <div class="col">
+      <p>
+        Today&rsquo;s icon sets <span class="mono">CHAT</span> over a boxed
+        <span class="mono">42.</span> on a pale gradient, shipped as nineteen flat PNGs in
+        <code>AppIcon.appiconset</code>. Every property Liquid Glass wants to control is
+        already baked into those pixels: the background gradient, the flat lighting, the
+        crop. The system has nothing left to light.
+      </p>
+      <p>
+        Four specific things break. The lettering runs nearly edge to edge, so the squircle
+        mask crops it. The strokes are hairline-thin at 32&nbsp;px. There is one flat layer,
+        so there is no depth for specular highlights to describe. And there is no dark or
+        mono variant, so the icon can&rsquo;t answer the four appearances the system asks for.
+      </p>
+      <p class="note">
+        The redraw keeps the brand where it actually lives &mdash; the crimson, the ink, and
+        the 42 &mdash; and gives up the one thing that cannot be made to work: setting the
+        full name in an icon.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ DIRECTIONS ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">Two directions</p>
+      <h2>One keeps the number. One plays it safe.</h2>
+      <p class="lede">Both are fully compliant. They differ in how much brand they carry.</p>
+    </div>
+    <div class="cards cols-2">
+      <div class="card pick">
+        <span class="tag rec">Recommended</span>
+        <div class="specimen" id="specA"></div>
+        <h3 style="margin-top:1.1rem">A &mdash; The Answer</h3>
+        <p style="margin:0;color:var(--text-soft);font-size:.95rem">
+          A crimson bubble carrying the 42. It is the only mark here that could belong to
+          this app and no other &mdash; the Hitchhiker&rsquo;s joke is the product&rsquo;s
+          whole name, and an icon that drops it is a chat app like any other. The numerals
+          are drawn as geometry, not type, so nothing depends on a font.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag">Alternate</span>
+        <div class="specimen" id="specB"></div>
+        <h3 style="margin-top:1.1rem">B &mdash; Dialogue</h3>
+        <p style="margin:0;color:var(--text-soft);font-size:.95rem">
+          Two bubbles, ink behind crimson, no numerals at all. It survives to 16&nbsp;px more
+          comfortably and sidesteps Apple&rsquo;s caution about text entirely. The cost is
+          distinctiveness: it reads as <em>a</em> chat app rather than as Chat42.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ APPEARANCES ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">Appearances</p>
+      <h2>All four states the system renders</h2>
+      <p class="lede">
+        Follows the direction selected above. Colour is re-mapped per appearance;
+        the geometry never moves.
+      </p>
+    </div>
+    <div class="matrix" id="matrix"></div>
+    <p class="note" style="margin-top:1.6rem;max-width:var(--measure)">
+      Clear and Tinted are approximations. The real material &mdash; refraction, specular
+      response, the way the shapes pick up the wallpaper behind them &mdash; is composited by
+      the system at render time and can only be judged in Icon Composer or on a device.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ SIZE ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">The honest test</p>
+      <h2>Where icons actually get looked at</h2>
+      <p class="lede">
+        Drawn at true pixel sizes. The Dock hovers around 64&nbsp;px, a Finder list row
+        gives you 16.
+      </p>
+    </div>
+    <div class="ladder" id="ladder"></div>
+    <p style="margin-top:1.4rem;max-width:var(--measure);color:var(--text-soft);font-size:.95rem">
+      Direction A holds the numerals to 32&nbsp;px, verified against a real rasteriser rather
+      than by eye on a scaled vector. Below that the bubble silhouette and the crimson carry
+      recognition, which is how the small sizes work for most icons. Direction B stays legible
+      the whole way down.
+    </p>
+  </div>
+</section>
+
+<!-- ============================ ANATOMY ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">Anatomy</p>
+      <h2>Drawn as two parts, shipped as one layer</h2>
+      <p class="lede">
+        The bubble and the numerals stay separate files because they are easier to
+        edit that way. What ships is the two of them composed into a single Liquid
+        Glass layer — and that was a correction the compiler forced.
+      </p>
+    </div>
+    <div class="stackwrap" id="anatomy"></div>
+    <div class="col" style="margin-top:2rem">
+      <h3>What compiling it changed</h3>
+      <p style="color:var(--text-soft)">
+        Drawn as two groups — bubble behind, numerals in front — the numerals almost
+        vanished. A second glass group stacked on a dark one picks up what is beneath
+        it and loses nearly all its contrast. Turning specular and translucency off
+        did not recover it; putting both layers inside one group was worse, merging
+        them into a single object and dropping the numerals entirely. Painting the
+        numerals into one layer renders exactly as designed.
+      </p>
+      <p style="color:var(--text-soft)">
+        The cost is that bubble and numerals can no longer be recoloured
+        independently per appearance — the system derives dark and mono from the one
+        layer. Worth it for an icon you can read.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ COMPLIANCE ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">Compliance</p>
+      <h2>Against Apple&rsquo;s export rules, line by line</h2>
+      <p class="lede">
+        From &ldquo;Creating your app icon using Icon Composer&rdquo; &mdash; the
+        <em>Prepare your artwork for export</em> checklist.
+      </p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Apple&rsquo;s rule</th><th>What the artwork does</th><th style="width:70px">Met</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rule">Match the template canvas size</td>
+            <td>Every layer is <span class="mono">1024 &times; 1024</span>, same origin, same
+                viewBox, so layers land registered.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Design in layers, back to front</td>
+            <td>Files are numbered <span class="mono">01</span>, <span class="mono">02</span>
+                in render order, as Apple asks, so the sidebar matches the z-order.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Separate anything you&rsquo;ll vary per appearance</td>
+            <td>Deliberately not split: the system derives dark and mono from the
+                single layer. Splitting them cost more in contrast than it bought.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Convert text to outlines</td>
+            <td>The 42 is constructed geometry &mdash; arcs and stroked centrelines. No font
+                is referenced, so none can go missing or need licensing.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Remove blurs and shadows</td>
+            <td>No filter, no shadow, no specular anywhere in the source.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Remove background colours and gradients</td>
+            <td>Layer files carry shapes only. The gradient is an Icon Composer document
+                setting.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Don&rsquo;t export the canvas mask</td>
+            <td>Nothing is clipped to the squircle. The system applies the shape, so baking
+                one would double the rounding.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Prefer SVG, use vectors</td>
+            <td>Four SVGs, pure path geometry, no raster and no unsupported SVG features.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Four groups maximum</td>
+            <td>One. The two components compose into a single layer, because two
+                stacked glass groups cost the numerals their contrast.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Mono: one element white, rest greyed</td>
+            <td>Numerals go white, bubble to mid-grey; B puts the front bubble white.</td>
+            <td class="yes">Yes</td>
+          </tr>
+          <tr>
+            <td class="rule">Turn specular off where thin shapes go illegible</td>
+            <td>Tried, and measurably applied &mdash; but it did not rescue the
+                two-group version, so the fix was structural instead. The shipped
+                single layer needs no override.</td>
+            <td class="yes">n/a</td>
+          </tr>
+          <tr>
+            <td class="rule">Leave breathing room at the edges</td>
+            <td>Content sits inside a 140&nbsp;px margin, roughly 14%, clear of the mask.</td>
+            <td class="yes">Yes</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PALETTE / HANDOFF ============================ -->
+<section>
+  <div class="wrap">
+    <div class="head col">
+      <p class="eyebrow">Handoff</p>
+      <h2>Palette and Icon Composer settings</h2>
+      <p class="lede">
+        Every colour is lifted from the existing wordmark, so the icon and the app agree.
+      </p>
+    </div>
+
+    <div class="swatches" style="margin-bottom:2.4rem">
+      <div class="sw"><div class="chipc" style="background:#990000"></div>
+        <div class="meta"><b>Crimson</b><span>#990000</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#002D3C"></div>
+        <div class="meta"><b>Ink</b><span>#002D3C</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#F4F7F5"></div>
+        <div class="meta"><b>Cream</b><span>#F4F7F5</span></div></div>
+      <div class="sw"><div class="chipc" style="background:linear-gradient(145deg,#DCEFF3,#A9CFD9)"></div>
+        <div class="meta"><b>Mist</b><span>#DCEFF3 &rarr; #A9CFD9</span></div></div>
+      <div class="sw"><div class="chipc" style="background:#B01414"></div>
+        <div class="meta"><b>Crimson, lifted</b><span>#B01414 &middot; dark only</span></div></div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Appearance</th><th>Background</th><th>Bubble</th><th>Numerals</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rule">Default</td><td class="mono">#DCEFF3 &rarr; #A9CFD9</td>
+              <td class="mono">#990000</td><td class="mono">#F4F7F5</td></tr>
+          <tr><td class="rule">Dark</td><td class="mono">#06222D &rarr; #00161E</td>
+              <td class="mono">#B01414</td><td class="mono">#F4F7F5</td></tr>
+          <tr><td class="rule">Mono</td><td>system</td>
+              <td>55% grey</td><td>white</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col" style="margin-top:2.2rem">
+      <h3>Why crimson lifts in the dark</h3>
+      <p style="color:var(--text-soft)">
+        <span class="mono">#990000</span> against a near-black ground falls to roughly 2:1 &mdash;
+        the bubble stops separating from the background and the icon reads as a floating 42.
+        <span class="mono">#B01414</span> restores the separation at the same hue.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ BUILD ============================ -->
+<section>
+  <div class="wrap col">
+    <p class="eyebrow">One thing to decide</p>
+    <h2>Shipping this touches the build</h2>
+    <p>
+      <code>build.sh</code> deliberately avoids <code>actool</code> so Chat42 compiles with
+      only the Command Line Tools, not a full Xcode. An Icon Composer <code>.icon</code> file
+      needs Xcode&rsquo;s toolchain to compile, and adding one replaces the existing asset
+      catalog outright.
+    </p>
+    <p>
+      So this is a real trade, not a drop-in: either Xcode becomes a build requirement, or the
+      <code>.icon</code> is compiled once and its output committed. The artwork is ready
+      either way &mdash; the source SVGs and assembly notes are in
+      <code>design/AppIcon/</code>.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Chat42 icon direction &middot; layer sources in <span class="mono">design/AppIcon/</span> &middot;
+    palette sampled from the existing wordmark
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var A_BUBBLE = "M 140 388 A 192 192 0 0 1 332 196 L 692 196 A 192 192 0 0 1 884 388 "+
+    "L 884 544 A 192 192 0 0 1 692 736 L 486 736 C 470 806 400 856 292 872 "+
+    "C 262 866 260 846 282 830 C 334 800 350 772 346 736 A 192 192 0 0 1 140 544 Z";
+  var A_NUM = [
+    "M 292 500 L 468 354 L 468 570",
+    "M 288 500 L 510 500",
+    "M 593.5 458.5 A 76 76 0 1 1 731.1 465.7 L 594 570 L 740 570"
+  ];
+  var B_BACK = "M 148 356 A 160 160 0 0 1 308 196 L 628 196 A 160 160 0 0 1 788 356 "+
+    "L 788 468 A 160 160 0 0 1 628 628 L 404 628 C 392 700 326 750 232 766 "+
+    "C 296 706 314 666 306 628 A 160 160 0 0 1 148 468 Z";
+  var B_FRONT = "M 402 570 A 148 148 0 0 1 550 422 L 724 422 A 148 148 0 0 1 872 570 "+
+    "L 872 654 A 148 148 0 0 1 724 802 L 690 802 C 700 842 730 866 782 878 "+
+    "C 700 884 638 850 612 802 L 550 802 A 148 148 0 0 1 402 654 Z";
+
+  var DIRS = {
+    A:{label:"The Answer",
+       layers:[{kind:"fill",d:A_BUBBLE,tone:"primary",name:"bubble"},
+               {kind:"stroke",ds:A_NUM,tone:"onPrimary",name:"numerals",dx:-4}]},
+    B:{label:"Dialogue",
+       layers:[{kind:"fill",d:B_BACK,tone:"ink",name:"back bubble"},
+               {kind:"fill",d:B_FRONT,tone:"primary",name:"front bubble"}]}
+  };
+
+  var APPS = {
+    "default":{bg:["#DCEFF3","#A9CFD9"],primary:"#990000",ink:"#002D3C",onPrimary:"#F4F7F5"},
+    "dark":   {bg:["#0A2C39","#00161E"],primary:"#B01414",ink:"#0E4257",onPrimary:"#F4F7F5"},
+    "clear":  {bg:null,primary:"rgba(255,255,255,.40)",ink:"rgba(255,255,255,.26)",
+               onPrimary:"rgba(255,255,255,.92)"},
+    "tinted": {bg:null,primary:"rgba(150,196,214,.85)",ink:"rgba(150,196,214,.5)",
+               onPrimary:"#EAF6FA"}
+  };
+
+  /* Apple's icon shape is a continuous-curvature squircle, not a border-radius.
+     Sample a superellipse so the mask in the previews matches what the system crops to. */
+  function squircle(size,n){
+    var a=size/2,pts=[],i,t,c,s;
+    for(i=0;i<=240;i++){
+      t=i/240*Math.PI*2; c=Math.cos(t); s=Math.sin(t);
+      pts.push((a+a*Math.sign(c)*Math.pow(Math.abs(c),2/n)).toFixed(2)+" "+
+               (a+a*Math.sign(s)*Math.pow(Math.abs(s),2/n)).toFixed(2));
+    }
+    return "M "+pts.join(" L ")+" Z";
+  }
+
+  var uid=0;
+  function icon(opts){
+    var dir=DIRS[opts.dir], pal=APPS[opts.app||"default"], size=opts.size||512,
+        id="m"+(++uid), body="", i, L;
+
+    for(i=0;i<dir.layers.length;i++){
+      L=dir.layers[i];
+      if(opts.only!==undefined && opts.only!==i) continue;
+      if(L.kind==="fill"){
+        body+='<path d="'+L.d+'" fill="'+pal[L.tone]+'"/>';
+      }else{
+        body+='<g transform="translate('+(L.dx||0)+',0)" fill="none" stroke="'+pal[L.tone]+
+              '" stroke-width="48" stroke-linecap="round" stroke-linejoin="round">'+
+              L.ds.map(function(d){return '<path d="'+d+'"/>';}).join("")+'</g>';
+      }
+    }
+
+    var bg="";
+    if(opts.bg!==false && pal.bg){
+      bg='<defs><linearGradient id="g'+id+'" x1="0" y1="0" x2="0.55" y2="1">'+
+         '<stop offset="0" stop-color="'+pal.bg[0]+'"/>'+
+         '<stop offset="1" stop-color="'+pal.bg[1]+'"/></linearGradient></defs>'+
+         '<rect width="1024" height="1024" fill="url(#g'+id+')"/>';
+    }
+
+    var clip="", open="", close="";
+    if(opts.mask!==false){
+      clip='<clipPath id="c'+id+'"><path d="'+squircle(1024,4.6)+'"/></clipPath>';
+      open='<g clip-path="url(#c'+id+')">'; close='</g>';
+    }
+
+    /* A flat stand-in for the specular pass the system runs; clearly a hint, not the material. */
+    var gloss="";
+    if(opts.gloss){
+      gloss='<defs><linearGradient id="s'+id+'" x1="0" y1="0" x2="0.3" y2="1">'+
+            '<stop offset="0" stop-color="#fff" stop-opacity=".30"/>'+
+            '<stop offset=".45" stop-color="#fff" stop-opacity=".04"/>'+
+            '<stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'+
+            '<rect width="1024" height="1024" fill="url(#s'+id+')"/>';
+    }
+
+    var grid="";
+    if(opts.grid){
+      grid='<g fill="none" stroke="#F4F7F5" stroke-opacity=".34" stroke-width="2">'+
+           '<path d="'+squircle(1024,4.6)+'"/>'+
+           '<circle cx="512" cy="512" r="404"/>'+
+           '<rect x="108" y="108" width="808" height="808" rx="150"/>'+
+           '<path d="M512 0V1024M0 512H1024M0 0L1024 1024M1024 0L0 1024"/></g>';
+    }
+
+    return '<svg class="icon" viewBox="0 0 1024 1024" width="'+size+'" height="'+size+
+           '" role="img" aria-label="Chat42 icon, direction '+opts.dir+'">'+
+           clip+open+bg+body+gloss+close+grid+'</svg>';
+  }
+
+  var state={dir:"A",app:"default",grid:false};
+
+  function press(container,attr,val){
+    var bs=container.querySelectorAll("button");
+    for(var i=0;i<bs.length;i++){
+      bs[i].setAttribute("aria-pressed", String(bs[i].getAttribute(attr)===val));
+    }
+  }
+
+  function renderHero(){
+    document.getElementById("heroCanvas").innerHTML =
+      icon({dir:state.dir,app:state.app,size:420,gloss:true,grid:state.grid});
+  }
+
+  function renderMatrix(){
+    var cells=[
+      ["default","Default","Light appearance, the app&rsquo;s own gradient"],
+      ["dark","Dark","Crimson lifted so the bubble still separates"],
+      ["clear","Clear","Mono, untinted &mdash; glass over the wallpaper"],
+      ["tinted","Tinted","Mono, carrying the user&rsquo;s chosen hue"]
+    ];
+    document.getElementById("matrix").innerHTML = cells.map(function(c){
+      return '<div class="cell"><div class="frame f-'+c[0]+'">'+
+             icon({dir:state.dir,app:c[0],size:170,bg:(c[0]==="clear"||c[0]==="tinted")?false:true,
+                   gloss:true})+
+             '</div><div class="cap"><b>'+c[1]+'</b><span>'+c[2]+'</span></div></div>';
+    }).join("");
+  }
+
+  function renderLadder(){
+    var sizes=[16,24,32,48,64,128,192];
+    document.getElementById("ladder").innerHTML = sizes.map(function(s){
+      return '<div class="rung">'+icon({dir:state.dir,app:"default",size:s,gloss:false})+
+             '<span class="px">'+s+' px</span></div>';
+    }).join("");
+  }
+
+  function renderAnatomy(){
+    var dir=DIRS[state.dir], out="", i;
+    for(i=0;i<dir.layers.length;i++){
+      out+='<div class="layerbox"><div class="specimen">'+
+           icon({dir:state.dir,app:"default",size:180,only:i,bg:false,mask:false})+
+           '</div><div class="cap"><span class="lnum">0'+(i+1)+' &middot; '+
+           (i===0?"back":"front")+'</span><b>'+dir.layers[i].name+'</b>'+
+           '<span>'+(dir.layers[i].kind==="stroke"
+             ? "Stroked geometry, 48&nbsp;px. Specular off."
+             : "Flat fill, one colour, no effects.")+'</span></div></div>';
+    }
+    out+='<div class="layerbox"><div class="specimen">'+
+         icon({dir:state.dir,app:"default",size:180,gloss:true})+
+         '</div><div class="cap"><span class="lnum">&Sigma; &middot; composed</span>'+
+         '<b>with background</b><span>Gradient and mask applied by Icon Composer, '+
+         'never by the artwork.</span></div></div>';
+    document.getElementById("anatomy").innerHTML=out;
+  }
+
+  function renderSpecimens(){
+    document.getElementById("specA").innerHTML=icon({dir:"A",app:"default",size:230,bg:false,gloss:false});
+    document.getElementById("specB").innerHTML=icon({dir:"B",app:"default",size:230,bg:false,gloss:false});
+  }
+
+  function renderAll(){ renderHero(); renderMatrix(); renderLadder(); renderAnatomy(); }
+
+  document.getElementById("dirCtl").addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    state.dir=b.getAttribute("data-dir"); press(this,"data-dir",state.dir); renderAll();
+  });
+  document.getElementById("appCtl").addEventListener("click",function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    state.app=b.getAttribute("data-app"); press(this,"data-app",state.app); renderHero();
+  });
+  document.getElementById("gridBtn").addEventListener("click",function(){
+    state.grid=!state.grid; this.setAttribute("aria-pressed",String(state.grid)); renderHero();
+  });
+
+  renderSpecimens(); renderAll();
+})();
+</script>

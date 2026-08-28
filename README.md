@@ -173,6 +173,20 @@ There are two build definitions and they must stay in step: `Package.swift` (use
 by `build.sh`) and `project.yml` (used by XcodeGen for the Xcode project). Compiler
 settings are duplicated in both on purpose — change one, change the other.
 
+### App icon
+
+The icon is an Icon Composer bundle at `Chat42/Resources/AppIcon.icon`. Both it and
+the flat PNG fallback are generated — don't hand-edit either:
+
+```sh
+python3 design/AppIcon/generate.py
+```
+
+`build.sh` compiles the `.icon` with `actool` when Xcode is present, which is what
+produces the Liquid Glass material and the dark and tinted variants. With only the
+Command Line Tools it falls back to `iconutil` and the committed PNGs, so the build
+still works — just without the dynamic material. See `design/AppIcon/README.md`.
+
 ## Troubleshooting
 
 ### "Chat42 cannot be opened because Apple cannot check it for malicious software"

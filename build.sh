@@ -18,6 +18,7 @@ RESOURCES_DIR="${CONTENTS}/Resources"
 FRAMEWORKS_DIR="${CONTENTS}/Frameworks"
 
 SRC_RESOURCES="${ROOT}/Chat42/Resources"
+ICON_SRC="${SRC_RESOURCES}/AppIcon.icon"
 ICONSET_SRC="${SRC_RESOURCES}/Assets.xcassets/AppIcon.appiconset"
 LOGO_SRC="${SRC_RESOURCES}/Assets.xcassets/org42-logo-text.imageset/org42-logo-text.png"
 INFO_SRC="${SRC_RESOURCES}/Info.plist"
@@ -126,28 +127,70 @@ plutil -replace NSHumanReadableCopyright  -string "Copyright © 2026 Org42." "${
 plutil -replace LSMinimumSystemVersion    -string "14.0"               "${CONTENTS}/Info.plist"
 plutil -replace CFBundleIconFile          -string "AppIcon"            "${CONTENTS}/Info.plist"
 
-# --- AppIcon.icns (via iconutil, no actool needed) -------------------------
+# --- App icon --------------------------------------------------------------
+#
+# Two paths, because the layered Liquid Glass icon lives in AppIcon.icon and only
+# Xcode's actool can compile that:
+#
+#   actool present  compile AppIcon.icon into Assets.car — the layered icon macOS 26
+#                   renders with the dynamic material, plus its dark and tinted
+#                   variants — along with the AppIcon.icns it derives for older
+#                   releases.
+#   actool missing  fall back to the committed flat PNGs via iconutil, so a machine
+#                   with only the Command Line Tools still produces a working app,
+#                   just without the dynamic material.
+#
+# Both sources are generated from the same artwork by:
+#     python3 design/AppIcon/generate.py
 
-echo "Building AppIcon.icns from iconset..."
-TMP_ICONSET="$(mktemp -d)/AppIcon.iconset"
-mkdir -p "${TMP_ICONSET}"
+ACTOOL="$(xcrun -f actool 2>/dev/null || true)"
 
-# Map the existing PNGs in AppIcon.appiconset to the names iconutil expects
-# for macOS icns generation. The appiconset stores them by pixel dimension;
-# iconutil wants the canonical icon_<point>x<point>[@2x].png naming.
-cp "${ICONSET_SRC}/16.png"   "${TMP_ICONSET}/icon_16x16.png"
-cp "${ICONSET_SRC}/32.png"   "${TMP_ICONSET}/icon_16x16@2x.png"
-cp "${ICONSET_SRC}/32.png"   "${TMP_ICONSET}/icon_32x32.png"
-cp "${ICONSET_SRC}/64.png"   "${TMP_ICONSET}/icon_32x32@2x.png"
-cp "${ICONSET_SRC}/128.png"  "${TMP_ICONSET}/icon_128x128.png"
-cp "${ICONSET_SRC}/256.png"  "${TMP_ICONSET}/icon_128x128@2x.png"
-cp "${ICONSET_SRC}/256.png"  "${TMP_ICONSET}/icon_256x256.png"
-cp "${ICONSET_SRC}/512.png"  "${TMP_ICONSET}/icon_256x256@2x.png"
-cp "${ICONSET_SRC}/512.png"  "${TMP_ICONSET}/icon_512x512.png"
-cp "${ICONSET_SRC}/1024.png" "${TMP_ICONSET}/icon_512x512@2x.png"
+if [ -n "${ACTOOL}" ] && [ -d "${ICON_SRC}" ]; then
+    echo "Compiling AppIcon.icon with actool (Liquid Glass)..."
+    ICON_OUT="$(mktemp -d)"
 
-iconutil -c icns -o "${RESOURCES_DIR}/AppIcon.icns" "${TMP_ICONSET}"
-rm -rf "$(dirname "${TMP_ICONSET}")"
+    "${ACTOOL}" \
+        --output-format human-readable-text \
+        --notices --warnings \
+        --app-icon AppIcon \
+        --compile "${ICON_OUT}" \
+        --platform macosx \
+        --minimum-deployment-target 14.0 \
+        --output-partial-info-plist "${ICON_OUT}/partial.plist" \
+        "${ICON_SRC}" "${SRC_RESOURCES}/Assets.xcassets" >/dev/null
+
+    if [ ! -f "${ICON_OUT}/Assets.car" ] || [ ! -f "${ICON_OUT}/AppIcon.icns" ]; then
+        echo "❌ actool did not produce Assets.car and AppIcon.icns"
+        exit 1
+    fi
+
+    cp "${ICON_OUT}/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+    cp "${ICON_OUT}/Assets.car"   "${RESOURCES_DIR}/Assets.car"
+    # Assets.car is only consulted when the bundle names the icon asset.
+    plutil -replace CFBundleIconName -string "AppIcon" "${CONTENTS}/Info.plist"
+    rm -rf "${ICON_OUT}"
+else
+    echo "Building AppIcon.icns from flat PNGs (actool unavailable)..."
+    TMP_ICONSET="$(mktemp -d)/AppIcon.iconset"
+    mkdir -p "${TMP_ICONSET}"
+
+    # Map the PNGs in AppIcon.appiconset to the names iconutil expects for macOS
+    # icns generation. The appiconset stores them by pixel dimension; iconutil
+    # wants the canonical icon_<point>x<point>[@2x].png naming.
+    cp "${ICONSET_SRC}/16.png"   "${TMP_ICONSET}/icon_16x16.png"
+    cp "${ICONSET_SRC}/32.png"   "${TMP_ICONSET}/icon_16x16@2x.png"
+    cp "${ICONSET_SRC}/32.png"   "${TMP_ICONSET}/icon_32x32.png"
+    cp "${ICONSET_SRC}/64.png"   "${TMP_ICONSET}/icon_32x32@2x.png"
+    cp "${ICONSET_SRC}/128.png"  "${TMP_ICONSET}/icon_128x128.png"
+    cp "${ICONSET_SRC}/256.png"  "${TMP_ICONSET}/icon_128x128@2x.png"
+    cp "${ICONSET_SRC}/256.png"  "${TMP_ICONSET}/icon_256x256.png"
+    cp "${ICONSET_SRC}/512.png"  "${TMP_ICONSET}/icon_256x256@2x.png"
+    cp "${ICONSET_SRC}/512.png"  "${TMP_ICONSET}/icon_512x512.png"
+    cp "${ICONSET_SRC}/1024.png" "${TMP_ICONSET}/icon_512x512@2x.png"
+
+    iconutil -c icns -o "${RESOURCES_DIR}/AppIcon.icns" "${TMP_ICONSET}"
+    rm -rf "$(dirname "${TMP_ICONSET}")"
+fi
 
 # --- Other resources -------------------------------------------------------
 #

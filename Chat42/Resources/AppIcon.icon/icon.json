@@ -1,0 +1,21 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.66275,0.81176,0.85098,1.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "image-name": "icon.svg",
+          "name": "Bubble"
+        }
+      ]
+    }
+  ],
+  "supported-platforms": {
+    "circles": [
+      "watchOS"
+    ],
+    "squares": "shared"
+  }
+}
