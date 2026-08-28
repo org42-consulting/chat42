@@ -58,6 +58,10 @@ struct Chat42App: App {
     }
     HotKeyManager.shared.register()
 
+    // Reads the stored gateway key. After the window exists, so that a keychain
+    // authorization prompt appears over a running app instead of blocking launch.
+    await appState.loadGatewayCredentials()
+
     // Restores the model that was loaded when the app last quit, so the local
     // backend is usable without a trip through Settings first.
     await mlxService.autoLoadIfEnabled()

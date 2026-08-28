@@ -146,14 +146,19 @@ final class AppState {
     let savedOllamaURL =
       defaults.string(forKey: DefaultsKey.ollamaBaseURL) ?? AppState.defaultOllamaBaseURL
     let savedGatewayURL = defaults.string(forKey: DefaultsKey.gatewayBaseURL) ?? ""
-    let savedKey = KeychainHelper.load(forKey: DefaultsKey.gatewayAPIKey) ?? ""
     let savedContextLimit =
       (defaults.object(forKey: DefaultsKey.contextTokenLimit) as? Int)
       ?? AppState.defaultContextTokenLimit
 
     // Both services are `let`, so they have to be assigned before `self` is usable.
     ollamaService = OllamaService(baseURL: savedOllamaURL, contextTokenLimit: savedContextLimit)
-    gatewayService = GatewayService(baseURL: savedGatewayURL, apiKey: savedKey)
+    // The API key is deliberately NOT read here. `SecItemCopyMatching` blocks the
+    // calling thread, and when the keychain ACL does not match the running binary —
+    // after a re-sign, an OS migration, a restore from backup, or simply a local
+    // rebuild — macOS answers it with a modal password prompt. Doing that in `init`
+    // froze the app behind that dialog before it drew its first frame. It is loaded
+    // by `loadGatewayCredentials()` once the UI is up instead.
+    gatewayService = GatewayService(baseURL: savedGatewayURL, apiKey: "")
 
     ollamaBaseURL = savedOllamaURL
     gatewayBaseURL = savedGatewayURL
@@ -185,6 +190,19 @@ final class AppState {
       PresetStore.save(presets)
     }
     PresetStore.hasSeeded = true
+  }
+
+  /// Reads the stored gateway key off the main actor and hands it to the service.
+  ///
+  /// Called after the window exists, so a keychain prompt is something the user can
+  /// answer with the app visible behind it rather than a hang at launch.
+  func loadGatewayCredentials() async {
+    let key = await Task.detached(priority: .utility) {
+      KeychainHelper.load(forKey: "gatewayAPIKey")
+    }.value
+    guard let key, !key.isEmpty else { return }
+    await gatewayService.update(baseURL: gatewayBaseURL, apiKey: key)
+    await refreshGatewayModels()
   }
 
   // MARK: - Conversation management

@@ -97,6 +97,9 @@ struct SettingsView: View {
     }
     .animation(.easeInOut(duration: 0.25), value: showToast)
     .onAppear { loadFromState() }
+    // Same reasoning as AppState: reading the keychain can raise a modal prompt, so
+    // it happens off the main thread with the window already on screen.
+    .task { gatewayAPIKey = await Self.storedAPIKey() }
     // Closing the window without pressing Done should not silently discard edits.
     .onDisappear { apply() }
     .toolbar {
@@ -116,7 +119,12 @@ struct SettingsView: View {
     temperature = state.temperature
     contextTokenLimit = state.contextTokenLimit
     gatewayURL = state.gatewayBaseURL
-    gatewayAPIKey = KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
+  }
+
+  private static func storedAPIKey() async -> String {
+    await Task.detached(priority: .utility) {
+      KeychainHelper.load(forKey: "gatewayAPIKey") ?? ""
+    }.value
   }
 
   // MARK: - General

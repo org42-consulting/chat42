@@ -19,7 +19,10 @@ final class HotKeyManager: @unchecked Sendable {
   private static let hotKeyID: UInt32 = 1
 
   private let lock = NSLock()
-  private var storedHandler: (@Sendable () -> Void)?
+  /// Main-actor isolated: what it does is raise a window, which is main-actor work.
+  /// Declaring that here rather than hopping inside the closure keeps the isolation
+  /// checkable instead of assumed.
+  private var storedHandler: (@MainActor @Sendable () -> Void)?
   private var hotKeyRef: EventHotKeyRef?
   private var eventHandlerRef: EventHandlerRef?
 
@@ -30,7 +33,7 @@ final class HotKeyManager: @unchecked Sendable {
   static let defaultKeyCode = UInt32(kVK_Space)
   static let defaultModifiers = UInt32(controlKey | optionKey)
 
-  func setHandler(_ handler: @escaping @Sendable () -> Void) {
+  func setHandler(_ handler: @escaping @MainActor @Sendable () -> Void) {
     lock.lock()
     storedHandler = handler
     lock.unlock()
@@ -41,7 +44,7 @@ final class HotKeyManager: @unchecked Sendable {
     let handler = storedHandler
     lock.unlock()
     guard let handler else { return }
-    DispatchQueue.main.async { handler() }
+    Task { @MainActor in handler() }
   }
 
   @discardableResult
