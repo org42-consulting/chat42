@@ -31,5 +31,8 @@ Chat42.app/
 *.dmg
 
 # AI
-.claude/
+# Ignore local Claude state (settings.local.json etc.) but share the run skill:
+# it is project tooling the whole team and future agents need, not personal config.
+.claude/*
+!.claude/skills/
 
