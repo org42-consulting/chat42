@@ -196,10 +196,7 @@ struct ChatView: View {
     VStack(spacing: 24) {
       Spacer()
       VStack(spacing: 12) {
-        Image("org42-logo-text")
-          .resizable()
-          .scaledToFit()
-          .frame(width: 260)
+        BrandLogoView()
           .accessibilityHidden(true)
         Text("sidebar.title")
           .font(.largeTitle)

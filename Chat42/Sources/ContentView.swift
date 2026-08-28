@@ -63,10 +63,7 @@ struct ContentView: View {
 
   private var noSelectionView: some View {
     VStack(spacing: 16) {
-      Image("org42-logo-text")
-        .resizable()
-        .scaledToFit()
-        .frame(width: 260)
+      BrandLogoView()
 
       Text("chat.no_selection")
         .font(.callout)

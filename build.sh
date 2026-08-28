@@ -151,9 +151,13 @@ rm -rf "$(dirname "${TMP_ICONSET}")"
 
 # --- Other resources -------------------------------------------------------
 #
-# The logo PNG goes straight into Resources/ instead of an asset catalog.
-# SwiftUI's Image("org42-logo-text") falls back to NSImage(named:), which
-# finds top-level images in the main bundle by name.
+# The logo PNG goes straight into Resources/ instead of an asset catalog, so that
+# building needs only the Command Line Tools (actool ships with full Xcode).
+#
+# A loose file is NOT reachable by SwiftUI's Image("org42-logo-text"): name lookup
+# goes through the asset catalog and quietly yields an empty image. Load it through
+# AppKit's bundle lookup instead — see BrandLogoView, which is the only thing that
+# should reference this file name.
 
 echo "Copying images and localizations..."
 cp "${LOGO_SRC}" "${RESOURCES_DIR}/org42-logo-text.png"
