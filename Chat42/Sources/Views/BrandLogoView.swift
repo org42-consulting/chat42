@@ -28,6 +28,12 @@ struct BrandLogoView: View {
         .interpolation(.high)
         .scaledToFit()
         .frame(width: size, height: size)
+        // The icon's own background is a pale teal, and it sits on the window's pale
+        // teal gradient — close enough that the squircle edge all but disappears and
+        // the crimson bubble does the work alone. A soft shadow lifts it off the
+        // panel. Scaled with `size` so both empty states get the same weight of
+        // shadow rather than the same pixel radius.
+        .shadow(color: .black.opacity(0.20), radius: size * 0.09, y: size * 0.03)
     }
   }
 }
