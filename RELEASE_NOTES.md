@@ -7,6 +7,63 @@
   CFBundleShortVersionString in Chat42/Resources/Info.plist.
 -->
 
+## Version 1.4.1
+
+### Fixed
+
+- **The app no longer hangs at launch behind a Keychain prompt.** `AppState.init`
+  read the gateway API key on the main thread before the first frame.
+  `SecItemCopyMatching` blocks its thread, and when the keychain ACL does not match
+  the running binary macOS answers with a modal password dialog — leaving a frozen
+  app with no window to explain why. The ACL stops matching after a re-sign, an OS
+  migration, a restore from backup, or any local rebuild. The key is now read after
+  the window exists, so a prompt appears over a running app instead of instead of
+  one. Settings did the same blocking read on appear; it no longer does.
+- Generated image filenames no longer come out as `-.png` for an all-punctuation
+  prompt.
+
+### Added
+
+- **Prompt presets.** A preset is a system prompt plus, optionally, the backend,
+  model, and temperature that suit it — replacing the single global system prompt
+  that applied to every task alike. Managed in Settings → Presets, started from
+  File → New Chat from Preset. Three starters ship.
+- **Model comparison.** A second model answers every turn and the two replies render
+  side by side. Concurrent, so a local model does not have to finish before the
+  remote one starts.
+- **Retry with a different model**, from the message context menu.
+- **Pinned documents** stay in context on every turn, unlike attachments, which the
+  model only sees on the turn they arrive.
+- **Menu bar item with a quick-ask popover**, backed by a real conversation, so
+  anything asked there is in the sidebar afterwards.
+- **Global hotkey (⌃⌥Space)** to summon the app. Uses Carbon `RegisterEventHotKey`,
+  which needs no Accessibility permission.
+- **"Ask Chat42" in the Services menu**, so a selection in any app can start a
+  conversation without copy/switch/paste.
+- **Context meter** in the composer: tokens used against budget, amber once trimming
+  begins. Cost is shown only when a price per million tokens is configured.
+- **MLX reloads the last model at launch** (toggleable), instead of starting with
+  nothing loaded and a trip through Settings.
+- Keyboard: ⌘F focuses search, ⌘1–9 jump to a conversation, ⌘⌥↑/↓ cycle, ⌘E exports.
+
+### Changed
+
+- **The sidebar sorts by recency.** `updatedAt` was maintained and persisted but
+  never read for ordering, so a chat replied to minutes ago sat below ones abandoned
+  weeks earlier.
+- **Search reads the whole transcript**, not just titles, and shows the matching
+  snippet under the row.
+- The active backend is persisted, so the app reopens where it left off.
+
+### Development
+
+- Integration tests drive the real send pipeline against a recording server
+  (`scripts/mock-ollama.py`), verifying at the wire level that an attached document
+  is still present on the *second* turn — the regression 1.4.0 was built to fix, and
+  previously only checked as a unit test of `ContextBuilder` in isolation.
+- `.claude/skills/run-chat42/` adds a driver for launching, driving, and
+  screenshotting the app, with the macOS automation traps documented.
+
 ## Version 1.4.0
 
 ### Fixed
