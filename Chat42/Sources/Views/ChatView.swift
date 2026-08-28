@@ -196,7 +196,7 @@ struct ChatView: View {
     VStack(spacing: 24) {
       Spacer()
       VStack(spacing: 12) {
-        BrandLogoView()
+        BrandLogoView(size: 96)
           .accessibilityHidden(true)
         Text("sidebar.title")
           .font(.largeTitle)

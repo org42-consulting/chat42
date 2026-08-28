@@ -20,7 +20,6 @@ FRAMEWORKS_DIR="${CONTENTS}/Frameworks"
 SRC_RESOURCES="${ROOT}/Chat42/Resources"
 ICON_SRC="${SRC_RESOURCES}/AppIcon.icon"
 ICONSET_SRC="${SRC_RESOURCES}/Assets.xcassets/AppIcon.appiconset"
-LOGO_SRC="${SRC_RESOURCES}/Assets.xcassets/org42-logo-text.imageset/org42-logo-text.png"
 INFO_SRC="${SRC_RESOURCES}/Info.plist"
 PRIVACY_SRC="${SRC_RESOURCES}/PrivacyInfo.xcprivacy"
 ENTITLEMENTS="${ROOT}/Chat42/Chat42.entitlements"
@@ -192,16 +191,16 @@ fi
 
 # --- Other resources -------------------------------------------------------
 #
-# The logo PNG goes straight into Resources/ instead of an asset catalog, so that
-# building needs only the Command Line Tools (actool ships with full Xcode).
+# org42-logo-text.png is deliberately NOT copied. The empty states now draw the app's
+# own icon (BrandLogoView), so nothing loads the wordmark and copying it would ship
+# dead weight. The file stays in Assets.xcassets as a brand asset.
 #
-# A loose file is NOT reachable by SwiftUI's Image("org42-logo-text"): name lookup
-# goes through the asset catalog and quietly yields an empty image. Load it through
-# AppKit's bundle lookup instead — see BrandLogoView, which is the only thing that
-# should reference this file name.
+# If something needs it again, copy it back to Resources/ here AND load it through
+# AppKit's bundle lookup. SwiftUI's Image("org42-logo-text") resolves the name through
+# an asset catalog, which this build has none of, and quietly yields an empty image —
+# the layout still reserves space and draws nothing, with no error anywhere.
 
-echo "Copying images and localizations..."
-cp "${LOGO_SRC}" "${RESOURCES_DIR}/org42-logo-text.png"
+echo "Copying localizations..."
 
 for lang in en nl; do
     mkdir -p "${RESOURCES_DIR}/${lang}.lproj"

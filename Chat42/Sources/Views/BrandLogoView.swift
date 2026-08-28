@@ -1,35 +1,33 @@
 import AppKit
 import SwiftUI
 
-/// The Org42 wordmark shown on the two empty states.
+/// The app's own icon, shown on the two empty states.
 ///
-/// The PNG ships as a loose file in `Contents/Resources/` rather than in a compiled
-/// asset catalog, because build.sh deliberately avoids `actool` so that building the
-/// app needs only the Command Line Tools and not a full Xcode.
+/// Reads `NSImage.applicationIconName` rather than shipping a second copy of the
+/// artwork. Whatever the build actually produced — the Liquid Glass icon when
+/// `actool` compiled `AppIcon.icon`, the flat fallback when it wasn't available — is
+/// what appears here, so this panel can never drift from the icon in the Dock. It
+/// also picks up the appearance the system is rendering, which a static PNG could
+/// not.
 ///
-/// SwiftUI's `Image("org42-logo-text")` resolves a *name* through the asset catalog,
-/// and with no catalog to consult it silently yielded an empty image: the layout
-/// still reserved a square 260x260 (a missing image has no aspect ratio to fit) and
-/// drew nothing at all, so the wordmark was absent from both empty states with no
-/// error anywhere. AppKit's bundle lookup does find the loose file, so resolve it
-/// that way and hand SwiftUI a real `NSImage`.
+/// This replaced a loose `org42-logo-text.png` loaded by bundle lookup, which existed
+/// only to work around `build.sh` having no asset catalog to resolve names through.
 struct BrandLogoView: View {
-  /// Rendered width. Height follows the image's own aspect ratio (roughly 3.6:1).
-  var width: CGFloat = 260
+  /// Rendered edge length. The icon is square.
+  var size: CGFloat = 128
 
   var body: some View {
-    if let logo = Self.image {
-      Image(nsImage: logo)
+    // Looked up per render rather than cached in a `static let`. The old wordmark was
+    // cached because it decoded a PNG off disk on every redraw, and the empty states
+    // redraw on every keystroke in the sidebar search field. This is a named-image
+    // lookup AppKit already caches, so the cost is gone — and holding the result
+    // ourselves would pin one appearance instead of following the system's.
+    if let icon = NSImage(named: NSImage.applicationIconName) {
+      Image(nsImage: icon)
         .resizable()
+        .interpolation(.high)
         .scaledToFit()
-        .frame(width: width)
+        .frame(width: size, height: size)
     }
   }
-
-  /// Resolved once rather than per redraw: this decodes a ~40 KB file, and the empty
-  /// states re-render on every keystroke in the sidebar's search field.
-  private static let image: NSImage? =
-    Bundle.main
-    .url(forResource: "org42-logo-text", withExtension: "png")
-    .flatMap(NSImage.init(contentsOf:))
 }
