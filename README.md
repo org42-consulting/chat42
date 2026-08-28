@@ -23,6 +23,7 @@ Chat42 is a user friendly frontend for AI models that run on your machine or som
 - Export a conversation as Markdown
 - System prompt, temperature, and context size configuration
 - Dark/light mode support
+- Built-in help covering every feature, under Help → Chat42 Help (⌘?)
 
 ## Quick Start Guide
 Want to get started without having to face technical installations? Just follow these steps:
@@ -121,6 +122,13 @@ Access settings through the gear icon in the sidebar or with ⌘, — both open 
 3. Start a new conversation by typing in the input field
 4. View conversation history in the sidebar
 5. Adjust settings as needed through the Settings menu
+
+Help → Chat42 Help (⌘?) opens a window covering each part of the app — backends,
+conversations, attachments, pinned documents, comparison, presets, the menu bar and
+hotkey, the context meter, every settings pane, the keyboard shortcuts, where data is
+kept, and what the error messages mean. It is localized alongside the rest of the UI,
+so its content lives in `Chat42/Resources/*.lproj/Localizable.strings` under the
+`help.` namespace and the structure lives in `Chat42/Sources/Views/HelpView.swift`.
 
 ### Attachments
 

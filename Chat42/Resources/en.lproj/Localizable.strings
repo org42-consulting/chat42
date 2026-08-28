@@ -308,3 +308,224 @@
 "quick.open" = "Open in Chat42";
 "quick.thinking" = "Thinking…";
 "service.no_text" = "Select some text first.";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Help window (Help → Chat42 Help, ⌘?).
+
+   Prose here is rendered as inline markdown, so `backticks` mark commands and
+   paths and *asterisks* emphasise. Keep menu paths written with ▸ and keep key
+   equivalents out of the translated text — the shortcut table renders those
+   verbatim from HelpView.
+   ───────────────────────────────────────────────────────────────────────────── */
+"help.window.title" = "Chat42 Help";
+"help.menu.item" = "Chat42 Help";
+
+/* Help – Getting started */
+"help.start.title" = "Getting started";
+"help.start.lead" = "Chat42 is a chat window in front of a language model. The model can run on this Mac or on a server you point the app at, and which one answers is your choice — there is no account and no subscription in between.";
+"help.start.first.title" = "Your first answer";
+"help.start.first.body" = "The shortest route runs entirely on this Mac and needs nothing installed beforehand.";
+"help.start.step1" = "Open Settings";
+"help.start.step1.detail" = "Press `⌘,` or click the gear at the foot of the sidebar, then choose the MLX pane.";
+"help.start.step2" = "Download a model";
+"help.start.step2.detail" = "Start near the top of the list. Qwen 3 0.6B is about 350 MB and is ready in seconds; the entries further down answer better and are much larger. A download in progress can be cancelled.";
+"help.start.step3" = "Load it";
+"help.start.step3.detail" = "Click Load, then close Settings. Downloading puts the model on disk; loading puts it in memory, which is what makes it answerable.";
+"help.start.step4" = "Ask something";
+"help.start.step4.detail" = "⌘N starts a chat. Check that MLX is selected in the bar above the transcript, type a question, and press Return.";
+"help.start.note" = "The dot beside the model name is the backend's status. Green means it answered, amber means it is reachable but has no models to offer, red means it could not be reached at all.";
+
+/* Help – Backends */
+"help.backends.title" = "Backends";
+"help.backends.lead" = "Three kinds of backend, chosen in the bar above a transcript or from the Model menu. The choice is remembered between launches, and every conversation records which model actually served it.";
+"help.backends.ollama" = "Ollama";
+"help.backends.ollama.detail" = "Models you have pulled with the `ollama` command, served over HTTP — `http://localhost:11434` unless you change it. Chat42 lists whatever Ollama reports, and sends images to the models that accept them.";
+"help.backends.mlx" = "MLX";
+"help.backends.mlx.detail" = "Apple's own framework, running the model directly on Apple Silicon. Models come from a curated list, are downloaded from Hugging Face, and stay on this Mac. One is loaded at a time. Needs an M-series chip; there is no Intel fallback.";
+"help.backends.gateway" = "Gateway";
+"help.backends.gateway.detail" = "Any OpenAI-compatible endpoint — LiteLLM, OpenAI, OpenRouter, Jan. The model list is whatever the endpoint returns from `/v1/models`. Models that generate images are listed under their own heading, because they answer with a picture instead of text.";
+"help.backends.note" = "MLX will not take image attachments. Send those to Ollama, or to a gateway model that accepts vision input.";
+
+/* Help – Conversations */
+"help.conv.title" = "Conversations";
+"help.conv.lead" = "Every chat is kept. The sidebar lists them most recently active first, and each row shows the backend and model that answered in it.";
+"help.conv.new" = "New chat";
+"help.conv.new.detail" = "⌘N, or the pencil in the sidebar header. File ▸ New Chat from Preset starts one that is already configured.";
+"help.conv.titles" = "Titles";
+"help.conv.titles.detail" = "Taken from the first few words you send. Right-click a row and choose Rename to write your own.";
+"help.conv.search" = "Search";
+"help.conv.search.detail" = "⌘F moves focus to the search field. It matches the title and everything said in the conversation; when the match is in the body rather than the title, the row shows the passage it found.";
+"help.conv.switch" = "Switching";
+"help.conv.switch.detail" = "⌘1 through ⌘9 jump straight to a conversation by position. ⌥⌘↓ and ⌥⌘↑ walk the list, wrapping around at either end.";
+"help.conv.clear" = "Clear";
+"help.conv.clear.detail" = "The trash icon in the chat toolbar empties the transcript and keeps the conversation, along with the instructions it was started with. It asks first, and cannot be undone.";
+"help.conv.delete" = "Delete";
+"help.conv.delete.detail" = "Right-click a row and choose Delete. Any images the conversation generated go with it.";
+"help.conv.export" = "Export";
+"help.conv.export.detail" = "⌘E, or the share icon in the chat toolbar, writes the whole conversation to a Markdown file — the instructions, both sides of every turn, and the names of anything attached.";
+"help.conv.note" = "Replies stream per conversation. One arriving in a chat you are not looking at neither blocks the composer elsewhere nor gets cancelled when you switch away.";
+
+/* Help – Messages */
+"help.msg.title" = "Messages";
+"help.msg.lead" = "Return sends, Shift-Return starts a new line. The composer grows as you type and then scrolls.";
+"help.msg.stop" = "Stopping";
+"help.msg.stop.detail" = "While a reply streams, the send button becomes a red stop. Pressing it keeps whatever has arrived so far rather than throwing the turn away.";
+"help.msg.code" = "Code blocks";
+"help.msg.code.detail" = "Fenced code in a reply is rendered as a block with its own copy and Save to file… buttons. The language tag on the fence picks the file extension.";
+"help.msg.copy" = "Copy";
+"help.msg.copy.detail" = "The small icon under a reply copies it. Right-click offers the same for either side of the conversation.";
+"help.msg.edit" = "Edit and resend";
+"help.msg.edit.detail" = "Right-click one of your own messages. Rewriting it discards everything that came after and asks again from that point — this is how to change your mind mid-conversation without starting over.";
+"help.msg.regenerate" = "Regenerate";
+"help.msg.regenerate.detail" = "⌘R, or right-click the newest reply. Drops that answer and asks the same question again. Only the newest reply can be regenerated; for an earlier one, edit the question above it.";
+"help.msg.retry" = "Retry with";
+"help.msg.retry.detail" = "In the right-click menu of the newest reply. Asks the same question again on a different model, on any backend, in place of the answer you have.";
+"help.msg.delete" = "Delete";
+"help.msg.delete.detail" = "Removes one message and leaves the rest of the transcript alone.";
+"help.msg.images" = "Generated images";
+"help.msg.images.detail" = "A gateway image model answers with a picture rather than text. Save writes it out as a PNG; Copy puts it on the clipboard. These are the one kind of attachment Chat42 keeps on disk, because there is nowhere else for them to come from.";
+
+/* Help – Attachments */
+"help.att.title" = "Attachments";
+"help.att.lead" = "Drop a file onto the composer, or use the paperclip. Text files and PDFs have their text extracted; images are sent as images.";
+"help.att.types" = "What is accepted";
+"help.att.types.detail" = "Plain text of any kind, PDFs, and images. Several at once is fine.";
+"help.att.limits" = "Limits";
+"help.att.limits.detail" = "10 MB per image, 25 MB per document. Extracted text is cut off at around 200,000 characters, with a note in place of the rest rather than a silent truncation.";
+"help.att.pdf" = "PDFs";
+"help.att.pdf.detail" = "The text layer is read out page by page. A scanned PDF with no text layer is refused rather than sent empty — Chat42 does not run OCR.";
+"help.att.followup" = "Follow-up questions";
+"help.att.followup.detail" = "Extracted text stays with the turn it arrived on and is sent again on later turns, so a second question about a document still reaches the model with the document. Image bytes are kept only for the session: after a relaunch the chip is still in the transcript and the picture is gone.";
+"help.att.vision" = "Images";
+"help.att.vision.detail" = "Sent to Ollama and to gateway models that accept vision input. MLX refuses them and says so.";
+"help.att.note" = "The bytes of a file you attach are never written to disk. Only the text pulled out of it is, and only as part of the conversation.";
+
+/* Help – Pinned documents */
+"help.pin.title" = "Pinned documents";
+"help.pin.lead" = "The pin in the chat toolbar. A pinned document is sent with every turn, which is the whole difference between it and an attachment — an attachment is only visible on the turn it rides along with.";
+"help.pin.what" = "What to pin";
+"help.pin.what.detail" = "The material the conversation is about: a specification, a source file, a contract. Anything you expect to ask several questions about.";
+"help.pin.add" = "Adding";
+"help.pin.add.detail" = "Add file… in the pin popover takes text files and PDFs. Images cannot be pinned; there is no text in them to keep in context.";
+"help.pin.cost" = "Cost";
+"help.pin.cost.detail" = "Pinned text is charged against the same context budget as the transcript, and the popover shows the running total. A large pinned file quietly leaves less room for the conversation itself.";
+"help.pin.remove" = "Unpinning";
+"help.pin.remove.detail" = "The cross beside a document removes it. While anything is pinned, the sidebar row shows a paperclip and a count.";
+"help.pin.note" = "Pinned documents and the system prompt are never trimmed away, however long the conversation gets.";
+
+/* Help – Comparing models */
+"help.cmp.title" = "Comparing models";
+"help.cmp.lead" = "The split-rectangle icon in the chat toolbar. Pick a second model and every turn is answered by both, side by side, each column captioned with the model that wrote it.";
+"help.cmp.same" = "The same question";
+"help.cmp.same.detail" = "Both columns are sent exactly the same context, so what differs between them is the model and nothing else.";
+"help.cmp.parallel" = "At the same time";
+"help.cmp.parallel.detail" = "The two requests run concurrently rather than one after the other, so a local model and a remote one do not add up.";
+"help.cmp.scope" = "Per conversation";
+"help.cmp.scope.detail" = "Comparison is set on the conversation and survives a relaunch. No comparison turns it off.";
+"help.cmp.offered" = "What is offered";
+"help.cmp.offered.detail" = "Every model that could answer right now: installed Ollama models, the loaded MLX model, and the gateway's chat models. Image models are left out, since a picture is not a comparable reply.";
+
+/* Help – Presets */
+"help.preset.title" = "Presets";
+"help.preset.lead" = "A preset is a system prompt with, optionally, the backend, model, and temperature that suit it. It is the difference between retyping the same instructions and picking them.";
+"help.preset.start" = "Starting from one";
+"help.preset.start.detail" = "File ▸ New Chat from Preset. The conversation opens with the preset's instructions already in place, and the sidebar tags it with the preset's name.";
+"help.preset.manage" = "Managing";
+"help.preset.manage.detail" = "Settings ▸ Presets. A preset needs a name and a prompt; everything else is optional.";
+"help.preset.current" = "Use current";
+"help.preset.current.detail" = "Leaving the backend, model, or temperature unset means the preset uses whatever is selected at the time. Pin them when the instructions only make sense on a particular model.";
+"help.preset.starters" = "The three you start with";
+"help.preset.starters.detail" = "Code reviewer, Translate to Dutch, and Commit message. Delete them if they are not useful — they are seeded once and do not come back.";
+
+/* Help – Menu bar and hotkey */
+"help.quick.title" = "Menu bar and hotkey";
+"help.quick.lead" = "Chat42 is answerable without being the app you are working in.";
+"help.quick.menubar" = "Menu bar";
+"help.quick.menubar.detail" = "The bubble in the menu bar opens Quick ask. Each question there starts a real conversation, so it is in the sidebar afterwards, and Open in Chat42 brings it up in the window rather than handing it over.";
+"help.quick.hotkey" = "Global hotkey";
+"help.quick.hotkey.detail" = "⌃⌥Space brings Chat42 forward from any app. It needs no accessibility permission. Control-Option-Space rather than anything with Command, which Spotlight and most launchers have already claimed.";
+"help.quick.service" = "Ask Chat42";
+"help.quick.service.detail" = "Select text in any app, then look under that app's Services menu. Ask Chat42 opens a new conversation with the selection as the question, which saves the copy, switch, paste round trip.";
+"help.quick.note" = "Closing the last window does not quit Chat42 — it stays in the menu bar. ⌘Q quits, and flushes anything not yet written to disk on the way out.";
+
+/* Help – Context and cost */
+"help.ctx.title" = "Context and cost";
+"help.ctx.lead" = "The small bar above the composer is the estimated size of the next request, measured against the budget set in Settings ▸ General.";
+"help.ctx.trim" = "Trimming";
+"help.ctx.trim.detail" = "Once the transcript no longer fits, the oldest turns are dropped and the meter turns amber. That is what keeps a long conversation working instead of failing outright. The instructions, the pinned documents, and the newest turn are always kept.";
+"help.ctx.estimate" = "It is an estimate";
+"help.ctx.estimate.detail" = "About four characters to a token, deliberately erring high. No provider exposes a token counter locally, so treat the number as advisory rather than exact.";
+"help.ctx.cost" = "Cost";
+"help.ctx.cost.detail" = "Set a price per million tokens in Settings ▸ Gateway and an estimate appears beside the meter for gateway conversations. Left at 0 nothing is shown — pricing is per model and it changes, so Chat42 will not guess one for you.";
+"help.ctx.ollama" = "Ollama";
+"help.ctx.ollama.detail" = "The same setting is sent as `num_ctx`. Ollama's own default is small enough to truncate a long chat on a model whose real window is far larger, so raising the context size here is what lets a model use all of it.";
+
+/* Help – Settings */
+"help.set.title" = "Settings";
+"help.set.lead" = "`⌘,` or the gear at the foot of the sidebar. Six panes. Changes apply when you press Done, and also when you simply close the window.";
+"help.set.general" = "General";
+"help.set.general.detail" = "The system prompt applied to new conversations, the temperature — higher is more inventive, lower more predictable — and the context size.";
+"help.set.presets" = "Presets";
+"help.set.presets.detail" = "Named prompts, with the model and temperature that go with them. See Presets.";
+"help.set.ollama" = "Ollama";
+"help.set.ollama.detail" = "The base URL, a Test Connection button, and the models Ollama reports as installed. If that list is empty, pull one: `ollama pull llama3.2`.";
+"help.set.gateway" = "Gateway";
+"help.set.gateway.detail" = "The base URL and API key, an optional price per million tokens, and the model list. The buttons under Compatible Gateways fill in the URL for LiteLLM, OpenAI, or Ollama. The key is stored in the macOS Keychain and never in preferences.";
+"help.set.mlx" = "MLX";
+"help.set.mlx.detail" = "The model list, smallest first, from about 350 MB to 40 GB. Each row downloads, loads, and deletes on its own, a download in progress can be cancelled, and Load last model at launch restores whatever was in use when you quit.";
+"help.set.appearance" = "Appearance";
+"help.set.appearance.detail" = "System, Light, or Dark, independent of the rest of macOS.";
+"help.set.note" = "Chat42 speaks English and Dutch, and follows the language macOS is set to.";
+
+/* Help – Keyboard shortcuts */
+"help.sc.title" = "Keyboard shortcuts";
+"help.sc.lead" = "The menu bar carries all of these. This is the same list in one place.";
+"help.sc.new" = "New chat";
+"help.sc.export" = "Export the conversation as Markdown";
+"help.sc.find" = "Search conversations";
+"help.sc.regen" = "Regenerate the newest reply";
+"help.sc.refresh" = "Refresh the model list";
+"help.sc.jump" = "Jump to a conversation by position";
+"help.sc.cycle" = "Next and previous conversation";
+"help.sc.send" = "Send";
+"help.sc.newline" = "New line in the composer";
+"help.sc.settings" = "Settings";
+"help.sc.help" = "This window";
+"help.sc.hotkey" = "Bring Chat42 forward from any app";
+"help.sc.quit" = "Quit, saving first";
+
+/* Help – Privacy and data */
+"help.priv.title" = "Privacy and data";
+"help.priv.lead" = "Chat42 has no account, no server of its own, and no analytics. It asks the endpoint you configured, and nothing else.";
+"help.priv.where" = "Where things are kept";
+"help.priv.path.conversations" = "Every conversation, written half a second after the last change and again on quit.";
+"help.priv.path.images" = "Images a model produced. Removed along with the message that shows them.";
+"help.priv.path.models" = "Downloaded MLX models. Deleting a model in Settings removes it from here.";
+"help.priv.keychain" = "The API key";
+"help.priv.keychain.detail" = "The gateway key lives in the macOS Keychain, never in preferences. It is read shortly after launch rather than during it, so a keychain prompt appears over a running app instead of holding up the first frame.";
+"help.priv.attachments" = "Attachments";
+"help.priv.attachments.detail" = "The bytes of a file you attach never reach disk. The text extracted from it does, as part of the conversation, because that is what makes a follow-up question work.";
+"help.priv.local" = "Local backends";
+"help.priv.local.detail" = "Ollama and MLX answer on this Mac. Nothing you type leaves it.";
+"help.priv.remote" = "Gateways";
+"help.priv.remote.detail" = "A gateway is somebody else's server, including one on `localhost` that forwards to a remote API. What you send there is subject to whatever policy applies at the other end, not to this one.";
+
+/* Help – Troubleshooting */
+"help.tr.title" = "Troubleshooting";
+"help.tr.lead" = "What the messages mean, and what to do about them.";
+"help.tr.ollama_down" = "Ollama is not running";
+"help.tr.ollama_down.detail" = "Start it with `ollama serve`, then check the URL in Settings ▸ Ollama and press Test Connection.";
+"help.tr.no_models" = "No models installed";
+"help.tr.no_models.detail" = "Pull one on the Ollama side: `ollama pull llama3.2`. The list picks it up by itself, or immediately with ⇧⌘R.";
+"help.tr.mlx_intel" = "MLX requires Apple Silicon";
+"help.tr.mlx_intel.detail" = "There is no Intel path for MLX. On an Intel Mac, use Ollama or a gateway instead.";
+"help.tr.mlx_load" = "An MLX model will not load";
+"help.tr.mlx_load.detail" = "A model has to finish downloading before it can load, and a large one needs the memory to match — the 70B entry is 40 GB on disk and wants considerably more than that free.";
+"help.tr.gateway_auth" = "Authentication failed";
+"help.tr.gateway_auth.detail" = "Check the API key in Settings ▸ Gateway and press Test Connection. The key is read from the Keychain a moment after launch, so the very first attempt after an install or a rebuild may ask for keychain access.";
+"help.tr.temperature" = "A model rejected the temperature setting";
+"help.tr.temperature.detail" = "Some reasoning-tier models refuse an explicit temperature. Chat42 notices, drops the setting, and sends the request again — nothing is lost, and the message is there to explain why the reply ignored your temperature.";
+"help.tr.forgotten" = "Earlier turns are being forgotten";
+"help.tr.forgotten.detail" = "The context budget is full and the oldest turns are dropping out. Raise Context size in Settings ▸ General, or start a fresh conversation.";
+"help.tr.gatekeeper" = "macOS will not open the app";
+"help.tr.gatekeeper.detail" = "The build was not notarized. Use a release DMG, or build from source and run it on your own machine.";

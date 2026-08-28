@@ -7,11 +7,7 @@ struct ContentView: View {
   @AppStorage("colorScheme") private var colorSchemeRaw: String = "system"
 
   var preferredColorScheme: ColorScheme? {
-    switch colorSchemeRaw {
-    case "light": return .light
-    case "dark": return .dark
-    default: return nil
-    }
+    .chat42Override(colorSchemeRaw)
   }
 
   var body: some View {
@@ -80,6 +76,23 @@ struct ContentView: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .background(.clear)
+  }
+}
+
+// MARK: - Appearance
+
+extension ColorScheme {
+  /// Maps the stored Appearance setting to an override, or nil to follow the system.
+  ///
+  /// Shared by every window the app owns rather than restated per view: the setting
+  /// is app-wide, and a window that read it differently would sit in the wrong
+  /// appearance beside the others.
+  static func chat42Override(_ stored: String) -> ColorScheme? {
+    switch stored {
+    case "light": return .light
+    case "dark": return .dark
+    default: return nil
+    }
   }
 }
 

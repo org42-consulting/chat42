@@ -33,6 +33,8 @@ struct Chat42App: App {
         .environment(appState)
         .environment(mlxService)
     }
+
+    // The Help window is deliberately not a scene here — see HelpWindowPresenter.
   }
 
   // MARK: - Launch
@@ -131,6 +133,23 @@ struct Chat42App: App {
       }
       .keyboardShortcut("r", modifiers: .command)
       .disabled(appState.selectedConversation?.isSending ?? true)
+    }
+
+    // Replacing the group removes the stock "Chat42 Help" item, which opens a help
+    // book the app does not ship and reports that it cannot find one.
+    CommandGroup(replacing: .help) {
+      Button(String(localized: "help.menu.item")) {
+        HelpWindowPresenter.shared.show()
+      }
+      // `"?"` with `.command` alone — the obvious spelling — registers nothing:
+      // the item comes out with AXMenuItemCmdChar unset. Naming the modifier
+      // explicitly does register it (AX then reports "?" with Shift-Command), which
+      // is the ⌘? macOS uses for Help.
+      //
+      // Note that macOS draws no shortcut glyph beside an item in the Help menu —
+      // the one it injects the search field into — so this is registered but
+      // invisible. Do not "fix" that by moving the item out of the Help group.
+      .keyboardShortcut(KeyEquivalent("?"), modifiers: [.command, .shift])
     }
 
     CommandMenu("menu.conversations") {

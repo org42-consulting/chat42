@@ -307,3 +307,224 @@
 "quick.open" = "Open in Chat42";
 "quick.thinking" = "Denkt na…";
 "service.no_text" = "Selecteer eerst wat tekst.";
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Hulpvenster (Help → Chat42 Help, ⌘?).
+
+   Deze tekst wordt als inline markdown weergegeven: `backticks` markeren
+   commando's en paden, *sterretjes* geven nadruk. Menupaden met ▸ schrijven en
+   toetscombinaties buiten de vertaalde tekst laten — de lijst met sneltoetsen
+   komt letterlijk uit HelpView.
+   ───────────────────────────────────────────────────────────────────────────── */
+"help.window.title" = "Chat42 Help";
+"help.menu.item" = "Chat42 Help";
+
+/* Help – Aan de slag */
+"help.start.title" = "Aan de slag";
+"help.start.lead" = "Chat42 is een gespreksvenster voor een taalmodel. Dat model draait op deze Mac of op een server die je zelf aanwijst, en welk model antwoordt bepaal je zelf — er zit geen account en geen abonnement tussen.";
+"help.start.first.title" = "Je eerste antwoord";
+"help.start.first.body" = "De kortste route draait volledig op deze Mac en vraagt geen voorbereiding.";
+"help.start.step1" = "Open Instellingen";
+"help.start.step1.detail" = "Druk op `⌘,` of klik op het tandwiel onderaan de navigatiekolom en kies het paneel MLX.";
+"help.start.step2" = "Download een model";
+"help.start.step2.detail" = "Begin bovenaan de lijst. Qwen 3 0.6B is ongeveer 350 MB en is binnen enkele seconden klaar; de modellen verderop antwoorden beter en zijn veel groter. Een lopende download kun je annuleren.";
+"help.start.step3" = "Laad het";
+"help.start.step3.detail" = "Klik op Laden en sluit Instellingen. Downloaden zet het model op schijf, laden zet het in het geheugen — en dat laatste maakt het pas bruikbaar.";
+"help.start.step4" = "Stel een vraag";
+"help.start.step4.detail" = "⌘N begint een gesprek. Controleer of MLX geselecteerd staat in de balk boven het gesprek, typ een vraag en druk op Return.";
+"help.start.note" = "Het bolletje naast de modelnaam is de status van de backend. Groen betekent dat er antwoord kwam, oranje dat de backend bereikbaar is maar geen modellen heeft, rood dat er geen verbinding was.";
+
+/* Help – Backends */
+"help.backends.title" = "Backends";
+"help.backends.lead" = "Drie soorten backend, te kiezen in de balk boven een gesprek of via het menu Model. De keuze blijft bewaard tussen sessies, en elk gesprek legt vast welk model het daadwerkelijk heeft bediend.";
+"help.backends.ollama" = "Ollama";
+"help.backends.ollama.detail" = "Modellen die je met het commando `ollama` hebt opgehaald, aangeboden via HTTP — `http://localhost:11434` tenzij je dat wijzigt. Chat42 toont wat Ollama meldt en stuurt afbeeldingen naar de modellen die die aankunnen.";
+"help.backends.mlx" = "MLX";
+"help.backends.mlx.detail" = "Apple's eigen framework, dat het model direct op Apple Silicon uitvoert. De modellen komen uit een samengestelde lijst, worden van Hugging Face gedownload en blijven op deze Mac. Er is er één tegelijk geladen. Vereist een M-chip; er is geen Intel-variant.";
+"help.backends.gateway" = "Gateway";
+"help.backends.gateway.detail" = "Elk OpenAI-compatibel eindpunt — LiteLLM, OpenAI, OpenRouter, Jan. De modellenlijst is wat het eindpunt teruggeeft op `/v1/models`. Modellen die afbeeldingen maken staan onder een eigen kop, omdat ze met een plaatje antwoorden in plaats van met tekst.";
+"help.backends.note" = "MLX neemt geen afbeeldingsbijlagen aan. Stuur die naar Ollama of naar een gateway-model dat vision ondersteunt.";
+
+/* Help – Gesprekken */
+"help.conv.title" = "Gesprekken";
+"help.conv.lead" = "Elk gesprek blijft bewaard. De navigatiekolom zet het meest recente bovenaan, en elke regel toont de backend en het model die erin geantwoord hebben.";
+"help.conv.new" = "Nieuw gesprek";
+"help.conv.new.detail" = "⌘N, of het potlood bovenaan de navigatiekolom. Archief ▸ Nieuw gesprek uit sjabloon begint een gesprek dat al is ingesteld.";
+"help.conv.titles" = "Titels";
+"help.conv.titles.detail" = "Overgenomen uit de eerste woorden die je stuurt. Klik rechts op een regel en kies Hernoemen om er zelf een te schrijven.";
+"help.conv.search" = "Zoeken";
+"help.conv.search.detail" = "⌘F zet de aandacht in het zoekveld. Er wordt gezocht in de titel en in alles wat er gezegd is; zit de treffer in het gesprek en niet in de titel, dan toont de regel de gevonden passage.";
+"help.conv.switch" = "Wisselen";
+"help.conv.switch.detail" = "⌘1 tot ⌘9 springen direct naar een gesprek op die positie. ⌥⌘↓ en ⌥⌘↑ lopen door de lijst en beginnen aan het eind weer vooraan.";
+"help.conv.clear" = "Wissen";
+"help.conv.clear.detail" = "Het prullenbakje in de gespreksbalk maakt het gesprek leeg maar behoudt het gesprek zelf, samen met de instructies waarmee het begon. Er wordt eerst om bevestiging gevraagd, en het kan niet ongedaan worden gemaakt.";
+"help.conv.delete" = "Verwijderen";
+"help.conv.delete.detail" = "Klik rechts op een regel en kies Verwijderen. Afbeeldingen die het gesprek heeft gemaakt gaan mee.";
+"help.conv.export" = "Exporteren";
+"help.conv.export.detail" = "⌘E, of het deelsymbool in de gespreksbalk, schrijft het hele gesprek naar een Markdown-bestand — de instructies, beide kanten van elke beurt en de namen van eventuele bijlagen.";
+"help.conv.note" = "Antwoorden komen per gesprek binnen. Een antwoord in een gesprek waar je niet naar kijkt blokkeert het tekstvak elders niet en wordt ook niet afgebroken als je wegschakelt.";
+
+/* Help – Berichten */
+"help.msg.title" = "Berichten";
+"help.msg.lead" = "Return verzendt, Shift-Return begint een nieuwe regel. Het tekstvak groeit mee en gaat daarna scrollen.";
+"help.msg.stop" = "Stoppen";
+"help.msg.stop.detail" = "Terwijl een antwoord binnenkomt verandert de verzendknop in een rode stopknop. Wat er al staat blijft staan; de beurt wordt niet weggegooid.";
+"help.msg.code" = "Codeblokken";
+"help.msg.code.detail" = "Code tussen accolades van drie backticks wordt als blok weergegeven, met eigen knoppen om te kopiëren en op te slaan. De taalaanduiding bij het blok bepaalt de bestandsextensie.";
+"help.msg.copy" = "Kopiëren";
+"help.msg.copy.detail" = "Het kleine symbool onder een antwoord kopieert het. Met de rechtermuisknop kan dat aan beide kanten van het gesprek.";
+"help.msg.edit" = "Bewerken en opnieuw versturen";
+"help.msg.edit.detail" = "Klik rechts op een van je eigen berichten. Als je het herschrijft verdwijnt alles wat erna kwam en wordt vanaf dat punt opnieuw gevraagd — zo verander je halverwege van gedachten zonder opnieuw te beginnen.";
+"help.msg.regenerate" = "Opnieuw genereren";
+"help.msg.regenerate.detail" = "⌘R, of rechtsklikken op het nieuwste antwoord. Dat antwoord vervalt en dezelfde vraag wordt opnieuw gesteld. Alleen het nieuwste antwoord kan opnieuw; voor een eerder antwoord bewerk je de vraag erboven.";
+"help.msg.retry" = "Opnieuw met";
+"help.msg.retry.detail" = "In het rechtermuismenu van het nieuwste antwoord. Stelt dezelfde vraag aan een ander model, op elke backend, in plaats van het antwoord dat er staat.";
+"help.msg.delete" = "Verwijderen";
+"help.msg.delete.detail" = "Verwijdert één bericht en laat de rest van het gesprek ongemoeid.";
+"help.msg.images" = "Gegenereerde afbeeldingen";
+"help.msg.images.detail" = "Een gateway-model voor afbeeldingen antwoordt met een plaatje in plaats van tekst. Bewaren schrijft het weg als PNG, Kopiëren zet het op het klembord. Dit is de enige soort bijlage die Chat42 op schijf bewaart, omdat er geen andere bron voor is.";
+
+/* Help – Bijlagen */
+"help.att.title" = "Bijlagen";
+"help.att.lead" = "Sleep een bestand op het tekstvak of gebruik de paperclip. Van tekstbestanden en pdf's wordt de tekst uitgelezen; afbeeldingen gaan als afbeelding mee.";
+"help.att.types" = "Wat kan mee";
+"help.att.types.detail" = "Tekst in elke vorm, pdf's en afbeeldingen. Meerdere tegelijk mag.";
+"help.att.limits" = "Grenzen";
+"help.att.limits.detail" = "10 MB per afbeelding, 25 MB per document. Uitgelezen tekst wordt rond 200.000 tekens afgekapt, met een opmerking in plaats van de rest en niet stilzwijgend.";
+"help.att.pdf" = "Pdf's";
+"help.att.pdf.detail" = "De tekstlaag wordt pagina voor pagina uitgelezen. Een gescande pdf zonder tekstlaag wordt geweigerd in plaats van leeg verstuurd — Chat42 doet geen OCR.";
+"help.att.followup" = "Vervolgvragen";
+"help.att.followup.detail" = "Uitgelezen tekst blijft bij de beurt waarop hij binnenkwam en gaat bij latere beurten weer mee, zodat een tweede vraag over een document het model met dat document bereikt. Afbeeldingen worden alleen voor deze sessie bewaard: na een herstart staat het label er nog en is het plaatje weg.";
+"help.att.vision" = "Afbeeldingen";
+"help.att.vision.detail" = "Gaan naar Ollama en naar gateway-modellen die vision ondersteunen. MLX weigert ze en zegt dat ook.";
+"help.att.note" = "De bytes van een bestand dat je bijvoegt komen nooit op schijf. Alleen de tekst die eruit is gehaald, en alleen als onderdeel van het gesprek.";
+
+/* Help – Vastgezette documenten */
+"help.pin.title" = "Vastgezette documenten";
+"help.pin.lead" = "De speld in de gespreksbalk. Een vastgezet document gaat bij élke beurt mee, en dat is precies het verschil met een bijlage — die is alleen zichtbaar op de beurt waarmee hij meereist.";
+"help.pin.what" = "Wat je vastzet";
+"help.pin.what.detail" = "Het materiaal waar het gesprek over gaat: een specificatie, een bronbestand, een contract. Alles waarover je meerdere vragen verwacht te stellen.";
+"help.pin.add" = "Toevoegen";
+"help.pin.add.detail" = "Bestand toevoegen… in het spelddialoogje neemt tekstbestanden en pdf's aan. Afbeeldingen kun je niet vastzetten; er zit geen tekst in om in de context te houden.";
+"help.pin.cost" = "Wat het kost";
+"help.pin.cost.detail" = "Vastgezette tekst gaat van hetzelfde contextbudget af als het gesprek, en het dialoogje toont de stand. Een groot vastgezet bestand laat stilletjes minder ruimte voor het gesprek zelf.";
+"help.pin.remove" = "Losmaken";
+"help.pin.remove.detail" = "Het kruisje naast een document haalt het weg. Zolang er iets is vastgezet toont de regel in de navigatiekolom een paperclip met een aantal.";
+"help.pin.note" = "Vastgezette documenten en de systeemprompt worden nooit weggelaten, hoe lang het gesprek ook wordt.";
+
+/* Help – Modellen vergelijken */
+"help.cmp.title" = "Modellen vergelijken";
+"help.cmp.lead" = "Het symbool met het gesplitste vlak in de gespreksbalk. Kies een tweede model en elke beurt wordt door beide beantwoord, naast elkaar, met boven elke kolom het model dat het schreef.";
+"help.cmp.same" = "Dezelfde vraag";
+"help.cmp.same.detail" = "Beide kolommen krijgen precies dezelfde context, dus wat er verschilt is het model en niets anders.";
+"help.cmp.parallel" = "Tegelijk";
+"help.cmp.parallel.detail" = "De twee verzoeken lopen naast elkaar in plaats van na elkaar, zodat een lokaal en een model op afstand niet bij elkaar opgeteld worden.";
+"help.cmp.scope" = "Per gesprek";
+"help.cmp.scope.detail" = "De vergelijking hoort bij het gesprek en blijft na een herstart staan. Geen vergelijking zet het uit.";
+"help.cmp.offered" = "Wat er wordt aangeboden";
+"help.cmp.offered.detail" = "Elk model dat nu kan antwoorden: geïnstalleerde Ollama-modellen, het geladen MLX-model en de chatmodellen van de gateway. Modellen voor afbeeldingen blijven weg, want een plaatje is geen vergelijkbaar antwoord.";
+
+/* Help – Sjablonen */
+"help.preset.title" = "Sjablonen";
+"help.preset.lead" = "Een sjabloon is een systeemprompt plus eventueel de backend, het model en de temperatuur die erbij horen. Het verschil tussen dezelfde instructies opnieuw typen en ze aanwijzen.";
+"help.preset.start" = "Ermee beginnen";
+"help.preset.start.detail" = "Archief ▸ Nieuw gesprek uit sjabloon. Het gesprek opent met de instructies van het sjabloon al ingevuld, en de navigatiekolom zet de naam van het sjabloon erbij.";
+"help.preset.manage" = "Beheren";
+"help.preset.manage.detail" = "Instellingen ▸ Sjablonen. Een sjabloon heeft een naam en een prompt nodig; de rest is optioneel.";
+"help.preset.current" = "Huidige gebruiken";
+"help.preset.current.detail" = "Laat je backend, model of temperatuur leeg, dan gebruikt het sjabloon wat op dat moment geselecteerd staat. Zet ze vast als de instructies alleen op een bepaald model kloppen.";
+"help.preset.starters" = "De drie die er al staan";
+"help.preset.starters.detail" = "Codereviewer, Vertaal naar het Nederlands en Commitbericht. Verwijder ze als je ze niet gebruikt — ze worden één keer geplaatst en komen niet terug.";
+
+/* Help – Menubalk en sneltoets */
+"help.quick.title" = "Menubalk en sneltoets";
+"help.quick.lead" = "Chat42 is bereikbaar zonder dat het de app is waarin je werkt.";
+"help.quick.menubar" = "Menubalk";
+"help.quick.menubar.detail" = "De spraakbel in de menubalk opent Snel vragen. Elke vraag daar begint een echt gesprek, dus je vindt het daarna terug in de navigatiekolom, en Open in Chat42 haalt het in het venster naar voren in plaats van het over te dragen.";
+"help.quick.hotkey" = "Systeembrede sneltoets";
+"help.quick.hotkey.detail" = "⌃⌥Space haalt Chat42 vanuit elke app naar voren. Daar is geen toegankelijkheidstoestemming voor nodig. Control-Option-Space en niets met Command, want die combinaties zijn al van Spotlight en de meeste starters.";
+"help.quick.service" = "Vraag het Chat42";
+"help.quick.service.detail" = "Selecteer tekst in een willekeurige app en kijk in het menu Diensten van die app. Vraag het Chat42 opent een nieuw gesprek met de selectie als vraag, wat het heen en weer kopiëren scheelt.";
+"help.quick.note" = "Het laatste venster sluiten sluit Chat42 niet af — de app blijft in de menubalk staan. ⌘Q sluit af en schrijft onderweg nog weg wat nog niet op schijf stond.";
+
+/* Help – Context en kosten */
+"help.ctx.title" = "Context en kosten";
+"help.ctx.lead" = "Het smalle balkje boven het tekstvak is de geschatte omvang van het volgende verzoek, gemeten tegen het budget uit Instellingen ▸ Algemeen.";
+"help.ctx.trim" = "Inkorten";
+"help.ctx.trim.detail" = "Zodra het gesprek niet meer past vervallen de oudste beurten en wordt de meter oranje. Dat is wat een lang gesprek laat doorlopen in plaats van laten mislukken. De instructies, de vastgezette documenten en de nieuwste beurt blijven altijd staan.";
+"help.ctx.estimate" = "Het is een schatting";
+"help.ctx.estimate.detail" = "Ongeveer vier tekens per token, met opzet aan de hoge kant. Geen enkele aanbieder biedt lokaal een tokenteller, dus behandel het getal als richtlijn en niet als exact.";
+"help.ctx.cost" = "Kosten";
+"help.ctx.cost.detail" = "Stel in Instellingen ▸ Gateway een prijs per miljoen tokens in en er komt een schatting naast de meter te staan voor gateway-gesprekken. Op 0 wordt er niets getoond — prijzen verschillen per model en veranderen, dus Chat42 verzint er geen.";
+"help.ctx.ollama" = "Ollama";
+"help.ctx.ollama.detail" = "Dezelfde instelling gaat mee als `num_ctx`. De standaard van Ollama zelf is klein genoeg om een lang gesprek af te kappen op een model met een veel groter venster, dus de contextgrootte hier verhogen is wat een model dat venster laat gebruiken.";
+
+/* Help – Instellingen */
+"help.set.title" = "Instellingen";
+"help.set.lead" = "`⌘,` of het tandwiel onderaan de navigatiekolom. Zes panelen. Wijzigingen gaan in als je op Gereed drukt, en ook als je het venster gewoon sluit.";
+"help.set.general" = "Algemeen";
+"help.set.general.detail" = "De systeemprompt voor nieuwe gesprekken, de temperatuur — hoger is creatiever, lager voorspelbaarder — en de contextgrootte.";
+"help.set.presets" = "Sjablonen";
+"help.set.presets.detail" = "Prompts met een naam, plus het model en de temperatuur die erbij horen. Zie Sjablonen.";
+"help.set.ollama" = "Ollama";
+"help.set.ollama.detail" = "De basis-URL, een knop Verbinding testen en de modellen die Ollama als geïnstalleerd meldt. Is die lijst leeg, haal er dan een op: `ollama pull llama3.2`.";
+"help.set.gateway" = "Gateway";
+"help.set.gateway.detail" = "De basis-URL en de API-sleutel, een optionele prijs per miljoen tokens en de modellenlijst. De knoppen onder Compatibele gateways vullen de URL in voor LiteLLM, OpenAI of Ollama. De sleutel gaat in de sleutelhanger van macOS en nooit in de voorkeuren.";
+"help.set.mlx" = "MLX";
+"help.set.mlx.detail" = "De modellenlijst, klein eerst, van ongeveer 350 MB tot 40 GB. Elke regel downloadt, laadt en verwijdert los van de andere, een lopende download kun je annuleren, en Laatste model laden bij starten herstelt wat in gebruik was toen je afsloot.";
+"help.set.appearance" = "Weergave";
+"help.set.appearance.detail" = "Systeem, Licht of Donker, los van de rest van macOS.";
+"help.set.note" = "Chat42 spreekt Nederlands en Engels, en volgt de taal die in macOS is ingesteld.";
+
+/* Help – Sneltoetsen */
+"help.sc.title" = "Sneltoetsen";
+"help.sc.lead" = "Ze staan allemaal in de menubalk. Dit is dezelfde lijst op één plek.";
+"help.sc.new" = "Nieuw gesprek";
+"help.sc.export" = "Het gesprek exporteren als Markdown";
+"help.sc.find" = "Zoeken in gesprekken";
+"help.sc.regen" = "Het nieuwste antwoord opnieuw genereren";
+"help.sc.refresh" = "De modellenlijst vernieuwen";
+"help.sc.jump" = "Naar een gesprek op die positie springen";
+"help.sc.cycle" = "Volgend en vorig gesprek";
+"help.sc.send" = "Verzenden";
+"help.sc.newline" = "Nieuwe regel in het tekstvak";
+"help.sc.settings" = "Instellingen";
+"help.sc.help" = "Dit venster";
+"help.sc.hotkey" = "Chat42 vanuit elke app naar voren halen";
+"help.sc.quit" = "Afsluiten, met opslaan";
+
+/* Help – Privacy en gegevens */
+"help.priv.title" = "Privacy en gegevens";
+"help.priv.lead" = "Chat42 heeft geen account, geen eigen server en geen analytics. De app vraagt het eindpunt dat jij hebt ingesteld, en verder niets.";
+"help.priv.where" = "Waar dingen staan";
+"help.priv.path.conversations" = "Alle gesprekken, weggeschreven een halve seconde na de laatste wijziging en opnieuw bij afsluiten.";
+"help.priv.path.images" = "Afbeeldingen die een model heeft gemaakt. Verdwijnen samen met het bericht waarin ze staan.";
+"help.priv.path.models" = "Gedownloade MLX-modellen. Een model verwijderen in Instellingen haalt het hier weg.";
+"help.priv.keychain" = "De API-sleutel";
+"help.priv.keychain.detail" = "De gateway-sleutel staat in de sleutelhanger van macOS, nooit in de voorkeuren. Hij wordt kort na het starten gelezen en niet tijdens het starten, zodat een vraag van de sleutelhanger over een lopende app verschijnt in plaats van het eerste beeld op te houden.";
+"help.priv.attachments" = "Bijlagen";
+"help.priv.attachments.detail" = "De bytes van een bestand dat je bijvoegt komen nooit op schijf. De tekst die eruit is gehaald wel, als onderdeel van het gesprek, want dat is wat een vervolgvraag laat werken.";
+"help.priv.local" = "Lokale backends";
+"help.priv.local.detail" = "Ollama en MLX antwoorden op deze Mac. Niets van wat je typt verlaat hem.";
+"help.priv.remote" = "Gateways";
+"help.priv.remote.detail" = "Een gateway is de server van iemand anders, ook een gateway op `localhost` die doorstuurt naar een API elders. Wat je daarheen stuurt valt onder het beleid aan de andere kant, niet onder dit beleid.";
+
+/* Help – Problemen oplossen */
+"help.tr.title" = "Problemen oplossen";
+"help.tr.lead" = "Wat de meldingen betekenen, en wat je eraan doet.";
+"help.tr.ollama_down" = "Ollama is niet actief";
+"help.tr.ollama_down.detail" = "Start het met `ollama serve`, controleer daarna de URL in Instellingen ▸ Ollama en druk op Verbinding testen.";
+"help.tr.no_models" = "Geen modellen geïnstalleerd";
+"help.tr.no_models.detail" = "Haal er een op aan de Ollama-kant: `ollama pull llama3.2`. De lijst pikt het zelf op, of direct met ⇧⌘R.";
+"help.tr.mlx_intel" = "MLX vereist Apple Silicon";
+"help.tr.mlx_intel.detail" = "Er is geen Intel-route voor MLX. Gebruik op een Intel-Mac Ollama of een gateway.";
+"help.tr.mlx_load" = "Een MLX-model laadt niet";
+"help.tr.mlx_load.detail" = "Een model moet klaar zijn met downloaden voordat het kan laden, en een groot model vraagt het geheugen dat erbij hoort — het model van 70B is 40 GB op schijf en wil aanzienlijk meer dan dat vrij hebben.";
+"help.tr.gateway_auth" = "Authenticatie mislukt";
+"help.tr.gateway_auth.detail" = "Controleer de API-sleutel in Instellingen ▸ Gateway en druk op Verbinding testen. De sleutel wordt kort na het starten uit de sleutelhanger gelezen, dus de eerste poging na een installatie of een nieuwe build kan om toegang tot de sleutelhanger vragen.";
+"help.tr.temperature" = "Een model weigerde de temperatuurinstelling";
+"help.tr.temperature.detail" = "Sommige reasoning-modellen accepteren geen expliciete temperatuur. Chat42 merkt dat, laat de instelling weg en stuurt het verzoek opnieuw — er gaat niets verloren, en de melding legt uit waarom het antwoord je temperatuur negeerde.";
+"help.tr.forgotten" = "Eerdere beurten worden vergeten";
+"help.tr.forgotten.detail" = "Het contextbudget is vol en de oudste beurten vallen eruit. Verhoog Contextgrootte in Instellingen ▸ Algemeen, of begin een nieuw gesprek.";
+"help.tr.gatekeeper" = "macOS wil de app niet openen";
+"help.tr.gatekeeper.detail" = "De build is niet genotariseerd. Gebruik een release-DMG, of bouw vanaf de broncode en start de app op je eigen machine.";

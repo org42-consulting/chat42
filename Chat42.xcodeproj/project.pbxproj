@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00DCDD8E0A5852F6E0C2C2A6 /* GatewayCredentialLoadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 664F96685C6B93EC3A3DB9AD /* GatewayCredentialLoadTests.swift */; };
 		057B4965609E2E86175BC85E /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5F7D51E0AF2B6E119948052 /* OllamaService.swift */; };
+		0620E5324197351E4857A9F4 /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 662E96D288CCA367D0DD1750 /* HelpView.swift */; };
 		0C8A02045ED9E5C2E733DA77 /* ProductivityFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC97FF9001EB8737D1E2A9B8 /* ProductivityFeatureTests.swift */; };
 		0DCFD70A0906276D1A7002FA /* GatewayFailureMapperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDDC9545CDB99A7153CC37AA /* GatewayFailureMapperTests.swift */; };
 		116A54026E143B5C441DF159 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5BB3B6D85777449626E89DE /* SidebarView.swift */; };
@@ -52,6 +53,7 @@
 		DE5DB202EC00A175A6C0C2DC /* AttachedFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E71DA5CD7EE9C5787C03BE /* AttachedFile.swift */; };
 		E3591F4F324850E583A045F3 /* GeneratedImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD4D1AE890ECE9D8833FFA22 /* GeneratedImageView.swift */; };
 		E6FE59C9F6713D9D1B0B3AA3 /* MessageSegmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E00AD915AA1946D66196C65B /* MessageSegmentTests.swift */; };
+		E7DEF048F18FC6138D616FCE /* HelpContentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CAF4B120BDE7D09CB44B383 /* HelpContentTests.swift */; };
 		EE38A2453FB0185E9B0C4486 /* PromptPreset.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE016AA691CB8C7E69AED5FC /* PromptPreset.swift */; };
 		EFCBD6F40D3A30E3A1425E2A /* PersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235CFC97781672240AC964B7 /* PersistenceTests.swift */; };
 		FE1494CF877BA6F16C121ACC /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7ADCE005CA761BFAACBDCF2 /* KeychainHelper.swift */; };
@@ -81,10 +83,12 @@
 		3C32B079B527CF2370A39EC1 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		519E62D0E675517B12CE581D /* Chat42Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Chat42Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FFA407B05973BD5763C5C57 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		662E96D288CCA367D0DD1750 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		664F96685C6B93EC3A3DB9AD /* GatewayCredentialLoadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayCredentialLoadTests.swift; sourceTree = "<group>"; };
 		6DA8D947253A91778D02B220 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		6DAA536152573C62C19AB206 /* AttachmentChipView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentChipView.swift; sourceTree = "<group>"; };
 		73ADA7A180E08CF8601914B7 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		7CAF4B120BDE7D09CB44B383 /* HelpContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpContentTests.swift; sourceTree = "<group>"; };
 		84C3EE6D2DAE1CE7E00EE3F6 /* ServiceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceProvider.swift; sourceTree = "<group>"; };
 		8C82BA864E25C94DB497D1F3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8EDA24A743975D30B271AD74 /* PinnedDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedDocument.swift; sourceTree = "<group>"; };
@@ -153,6 +157,7 @@
 				BDF1C35F67BDAC3405EA26FE /* ContextBuilderTests.swift */,
 				664F96685C6B93EC3A3DB9AD /* GatewayCredentialLoadTests.swift */,
 				EDDC9545CDB99A7153CC37AA /* GatewayFailureMapperTests.swift */,
+				7CAF4B120BDE7D09CB44B383 /* HelpContentTests.swift */,
 				AF3780C6BB8EEC2257BC9171 /* LivePipelineTests.swift */,
 				E00AD915AA1946D66196C65B /* MessageSegmentTests.swift */,
 				28CF1C466984F97ADA680DA3 /* MLXModelCatalogTests.swift */,
@@ -173,6 +178,7 @@
 				3C32B079B527CF2370A39EC1 /* ChatView.swift */,
 				E3DF7A451B7895AA62C12E4E /* CodeBlockView.swift */,
 				AD4D1AE890ECE9D8833FFA22 /* GeneratedImageView.swift */,
+				662E96D288CCA367D0DD1750 /* HelpView.swift */,
 				19CFC0755F89FEE37989589F /* MessageBubbleView.swift */,
 				BEA698C21EBEC9BB37D87B64 /* ModelSelectorView.swift */,
 				B764AFE1DB962BE00DDCB982 /* PinnedDocumentsView.swift */,
@@ -362,6 +368,7 @@
 				D1065C8C44F55D82729023C2 /* Conversation.swift in Sources */,
 				6590A375C124833401A74338 /* GatewayService.swift in Sources */,
 				E3591F4F324850E583A045F3 /* GeneratedImageView.swift in Sources */,
+				0620E5324197351E4857A9F4 /* HelpView.swift in Sources */,
 				591337DAE1FCC343D8A0C63F /* HotKeyManager.swift in Sources */,
 				2B4F36F1A030F7A7E1B35B50 /* ImageStore.swift in Sources */,
 				FE1494CF877BA6F16C121ACC /* KeychainHelper.swift in Sources */,
@@ -390,6 +397,7 @@
 				A4C7DCD814DB6E191C229235 /* ContextBuilderTests.swift in Sources */,
 				00DCDD8E0A5852F6E0C2C2A6 /* GatewayCredentialLoadTests.swift in Sources */,
 				0DCFD70A0906276D1A7002FA /* GatewayFailureMapperTests.swift in Sources */,
+				E7DEF048F18FC6138D616FCE /* HelpContentTests.swift in Sources */,
 				B210AF7E4E7FB144BA27DA14 /* LivePipelineTests.swift in Sources */,
 				AADE41EFA6799B6CA7B170F7 /* MLXModelCatalogTests.swift in Sources */,
 				E6FE59C9F6713D9D1B0B3AA3 /* MessageSegmentTests.swift in Sources */,
