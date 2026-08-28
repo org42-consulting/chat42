@@ -173,6 +173,15 @@ There are two build definitions and they must stay in step: `Package.swift` (use
 by `build.sh`) and `project.yml` (used by XcodeGen for the Xcode project). Compiler
 settings are duplicated in both on purpose — change one, change the other.
 
+> **`xcodegen generate` overwrites `Chat42/Resources/Info.plist`.**
+> `project.yml` declares that file under `info:`, so XcodeGen rewrites it from the
+> properties listed there — and those are a subset of what the plist actually
+> carries. Regenerating silently drops the `NSServices` block (the "Ask Chat42"
+> Services menu item) and resets `CFBundleShortVersionString` / `CFBundleVersion`
+> to `1.0` / `1`. After running XcodeGen, check `git diff Chat42/Resources/Info.plist`
+> and restore it. The durable fix is to either mirror those keys into `project.yml`
+> or stop letting it own the plist; until then, treat the file as hand-maintained.
+
 ### App icon
 
 The icon is an Icon Composer bundle at `Chat42/Resources/AppIcon.icon`. Both it and
