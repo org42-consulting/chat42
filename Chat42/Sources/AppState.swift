@@ -192,17 +192,32 @@ final class AppState {
     PresetStore.hasSeeded = true
   }
 
+  /// The one-shot Keychain read, held so that every caller awaits the same load
+  /// rather than starting a second one — or, worse, racing past it.
+  private var gatewayCredentialLoad: Task<Void, Never>?
+
   /// Reads the stored gateway key off the main actor and hands it to the service.
   ///
   /// Called after the window exists, so a keychain prompt is something the user can
-  /// answer with the app visible behind it rather than a hang at launch.
+  /// answer with the app visible behind it rather than a hang at launch. Idempotent:
+  /// the first call starts the read, and every later one waits on that same result.
   func loadGatewayCredentials() async {
-    let key = await Task.detached(priority: .utility) {
-      KeychainHelper.load(forKey: "gatewayAPIKey")
-    }.value
-    guard let key, !key.isEmpty else { return }
-    await gatewayService.update(baseURL: gatewayBaseURL, apiKey: key)
-    await refreshGatewayModels()
+    let load: Task<Void, Never>
+    if let existing = gatewayCredentialLoad {
+      load = existing
+    } else {
+      // Created and stored without an intervening await, so two callers on the main
+      // actor cannot both start a read.
+      load = Task { @MainActor in
+        let key = await Task.detached(priority: .utility) {
+          KeychainHelper.load(forKey: "gatewayAPIKey")
+        }.value
+        guard let key, !key.isEmpty else { return }
+        await gatewayService.update(baseURL: gatewayBaseURL, apiKey: key)
+      }
+      gatewayCredentialLoad = load
+    }
+    await load.value
   }
 
   // MARK: - Conversation management
@@ -366,6 +381,13 @@ final class AppState {
   func refreshGatewayModels() async {
     isLoadingGatewayModels = true
     defer { isLoadingGatewayModels = false }
+
+    // The key is read from the Keychain after launch, so a refresh that gets here
+    // first has to wait for it. Going ahead would send an unauthenticated request and
+    // report the resulting 401 as "check your API key" — with a valid key stored.
+    // Inside the loading flag, so a keychain prompt reads as "still loading".
+    await loadGatewayCredentials()
+
     do {
       // One request: the model list is also the reachability answer.
       let models = try await gatewayService.fetchModels()
@@ -808,6 +830,11 @@ final class AppState {
   }
 
   func applyGatewaySettings(baseURL: String, apiKey: String) async {
+    // Let the startup Keychain read finish first: a read still in flight would
+    // otherwise land after this and put the previous key back. It has almost always
+    // completed by the time Settings is reachable, so this is normally free.
+    await loadGatewayCredentials()
+
     gatewayBaseURL = baseURL
     UserDefaults.standard.set(baseURL, forKey: DefaultsKey.gatewayBaseURL)
     if !KeychainHelper.save(apiKey, forKey: DefaultsKey.gatewayAPIKey) {
