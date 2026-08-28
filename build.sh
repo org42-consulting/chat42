@@ -116,15 +116,13 @@ fi
 echo "Writing Info.plist..."
 cp "${INFO_SRC}" "${CONTENTS}/Info.plist"
 
-# Resolve the build variables that Xcode would normally substitute. Keep
-# these in sync with project.yml when changing identifiers or names.
+# Resolve only the $(...) build variables that Xcode would substitute. Everything
+# else — display name, copyright, minimum system version, version numbers — is
+# already correct in the source plist, which is the single place bundle metadata
+# is declared. Don't re-state values here; it drifts.
 plutil -replace CFBundleDevelopmentRegion -string "en"                 "${CONTENTS}/Info.plist"
 plutil -replace CFBundleExecutable        -string "${APP_NAME}"        "${CONTENTS}/Info.plist"
 plutil -replace CFBundleIdentifier        -string "com.chat42.Chat42"  "${CONTENTS}/Info.plist"
-plutil -replace CFBundleDisplayName       -string "Chat42."            "${CONTENTS}/Info.plist"
-plutil -replace CFBundleName              -string "Chat42."            "${CONTENTS}/Info.plist"
-plutil -replace NSHumanReadableCopyright  -string "Copyright © 2026 Org42." "${CONTENTS}/Info.plist"
-plutil -replace LSMinimumSystemVersion    -string "14.0"               "${CONTENTS}/Info.plist"
 plutil -replace CFBundleIconFile          -string "AppIcon"            "${CONTENTS}/Info.plist"
 
 # --- App icon --------------------------------------------------------------

@@ -31,22 +31,16 @@ targets:
           - "PrivacyInfo.xcprivacy"
           - "en.lproj/Localizable.strings"
           - "nl.lproj/Localizable.strings"
-    info:
-      path: Chat42/Resources/Info.plist
-      properties:
-        CFBundleDisplayName: "Chat42."
-        CFBundleName: "Chat42."
-        NSHumanReadableCopyright: "Copyright © 2026 Org42."
-        LSMinimumSystemVersion: "14.0"
-        NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
-          NSExceptionDomains:
-            localhost:
-              NSExceptionAllowsInsecureHTTPLoads: true
+    # Deliberately no `info:` block. Declaring one makes XcodeGen *generate*
+    # Chat42/Resources/Info.plist from the properties listed here, overwriting the
+    # real file — which silently dropped NSServices ("Ask Chat42") and reset the
+    # version to 1.0. The plist is hand-maintained and is the single source of
+    # truth for bundle metadata; point at it instead of regenerating it.
     entitlements:
       path: Chat42/Chat42.entitlements
     settings:
       base:
+        INFOPLIST_FILE: Chat42/Resources/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.chat42.Chat42
         PRODUCT_NAME: Chat42
         SWIFT_VERSION: "5.9"
