@@ -17,7 +17,7 @@
   the running binary macOS answers with a modal password dialog — leaving a frozen
   app with no window to explain why. The ACL stops matching after a re-sign, an OS
   migration, a restore from backup, or any local rebuild. The key is now read after
-  the window exists, so a prompt appears over a running app instead of instead of
+  the window exists, so a prompt appears over a running app instead of in place of
   one. Settings did the same blocking read on appear; it no longer does.
 - Generated image filenames no longer come out as `-.png` for an all-punctuation
   prompt.
