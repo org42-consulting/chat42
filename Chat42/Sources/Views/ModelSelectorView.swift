@@ -18,7 +18,10 @@ struct ModelSelectorView: View {
         }
       }
       .pickerStyle(.segmented)
-      .frame(width: 160)
+      // No fixed width: 160pt fit two backends and silently went stale when Gateway
+      // was added. `.frame(width:)` does not clip, so the control kept drawing at its
+      // full intrinsic width over the sidebar controls and the model picker.
+      .fixedSize()
       .labelsHidden()
       .accessibilityLabel(Text("model.backend.label"))
 
